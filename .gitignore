@@ -1,0 +1,19 @@
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Base de datos local y respaldos
+*.sqlite3
+*.dump
+*.sql.gz
+
+# Editor
+.vscode/
+.idea/
