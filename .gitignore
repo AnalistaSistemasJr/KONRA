@@ -8,6 +8,8 @@ venv/
 # Python
 __pycache__/
 *.pyc
+.coverage
+htmlcov/
 
 # Base de datos local y respaldos
 *.sqlite3

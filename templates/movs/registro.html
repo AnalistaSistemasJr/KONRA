@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Movs</title>
+</head>
+<body>
+    <h2>Movimientos lista</h2>
+    <strong>Hola: </strong> Aquí está la lista
+    
+    <form action="{% url 'movs:registro' %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Nuevo registro</button>
+    </form>
+
+    <form action="{% url 'users:login' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Salir de aquí</button>
+    </form>
+</body>
+
+</html>
