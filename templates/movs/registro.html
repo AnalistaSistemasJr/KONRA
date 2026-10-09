@@ -2,21 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Movs</title>
+    <title>Registro</title>
 </head>
 <body>
-    <h2>Movimientos lista</h2>
-    <strong>Hola: </strong> Aquí está la lista
-    
+    <h2>Registro de movimiento</h2>
+
     <form action="{% url 'movs:registro' %}" method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Nuevo registro</button>
+        <button type="submit">Nuevo movimiento</button>
     </form>
-
+    <br>
     <form action="{% url 'users:login' %}" method="post">
         {% csrf_token %}
-        <button type="submit">Salir de aquí</button>
+        <button type="submit">Cerrar sesión</button>
     </form>
 </body>
 
