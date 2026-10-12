@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.contrib.auth.models import Group
 from datetime import date, timedelta
-from apps.movs.models import RegistrarMovimiento
+from apps.movs.models import Registro_Movimientos
 from apps.catalogos.models import Estacion, Cuenta
 
 class RegistrarFormTest(TestCase):
@@ -39,7 +39,7 @@ class RegistrarFormTest(TestCase):
         )
 
     def test_anonimo_get_post_capturar(self):
-        registros_iniciales = RegistrarMovimiento.objects.count()
+        registros_iniciales = Registro_Movimientos.objects.count()
 
         #GET
         response = self.client.get(reverse("movs:registro"))
@@ -55,12 +55,12 @@ class RegistrarFormTest(TestCase):
                 "fecha": date.today()
             })
         self.assertEqual(response.status_code, 302)
-        registros_finales = RegistrarMovimiento.objects.count()
+        registros_finales = Registro_Movimientos.objects.count()
         self.assertEqual(registros_iniciales, registros_finales, "Se registro un movimiento con un usuario no autenticado")
 
 
     def test_user_sin_grupo_captura(self):
-        registros_iniciales = RegistrarMovimiento.objects.count()
+        registros_iniciales = Registro_Movimientos.objects.count()
         self.client.force_login(self.usuario_sin_grupo)
         response = self.client.get(reverse("movs:registro"))
         self.assertEqual(response.status_code, 403)
@@ -73,11 +73,11 @@ class RegistrarFormTest(TestCase):
                 "fecha": date.today()
             })
         self.assertEqual(response.status_code, 403)
-        registros_finales = RegistrarMovimiento.objects.count()
+        registros_finales = Registro_Movimientos.objects.count()
         self.assertEqual(registros_iniciales, registros_finales, "Se registro un movimiento con un usuario sin rol")
 
     def test_user_con_grupo_sin_permisos_captura(self):
-        registros_iniciales = RegistrarMovimiento.objects.count()
+        registros_iniciales = Registro_Movimientos.objects.count()
         self.client.force_login(self.usuario_con_grupo)
         response = self.client.get(reverse("movs:registro"))
         self.assertEqual(response.status_code, 403)
@@ -90,7 +90,7 @@ class RegistrarFormTest(TestCase):
                 "fecha": date.today()
             })
         self.assertEqual(response.status_code, 403)
-        registros_finales = RegistrarMovimiento.objects.count()
+        registros_finales = Registro_Movimientos.objects.count()
         self.assertEqual(registros_iniciales, registros_finales, "Se registro un movimiento con un usuario sin permisos")
 
     def test_user_con_permisos_visualizacion(self):
@@ -99,7 +99,7 @@ class RegistrarFormTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_user_con_permisos_captura(self):
-        registros_iniciales = RegistrarMovimiento.objects.count()
+        registros_iniciales = Registro_Movimientos.objects.count()
         self.client.force_login(self.usuario_con_permisos)
         response = self.client.post(
             reverse("movs:registro"),
@@ -107,19 +107,19 @@ class RegistrarFormTest(TestCase):
                 "fecha_caja": date.today(),
                 "estacion": self.estacion.pk,
                 "cuenta": self.cuenta.pk,
-                "tipo_movimiento": RegistrarMovimiento.Tipo.ENTRADA,
+                "tipo_movimiento": Registro_Movimientos.Tipo.ENTRADA,
                 "monto": "420.00",
                 "descripcion": "prueba registro con post usuario con permisos",
             }
         )
         self.assertEqual(response.status_code, 302)
-        registros_finales = RegistrarMovimiento.objects.count()
+        registros_finales = Registro_Movimientos.objects.count()
         self.assertEqual(registros_iniciales + 1, registros_finales, "No se registró el movimientos del usuario con acceso")
-        registro = RegistrarMovimiento.objects.latest("id")
+        registro = Registro_Movimientos.objects.latest("id")
         self.assertEqual(registro.creado_por, self.usuario_con_permisos, "ID de usuario diferente al logeado")
 
     def test_user_con_permisos_modifica_id_user_captura(self):
-        registros_iniciales = RegistrarMovimiento.objects.count()
+        registros_iniciales = Registro_Movimientos.objects.count()
         self.client.force_login(self.usuario_con_permisos)
         response = self.client.post(
             reverse("movs:registro"),
@@ -127,35 +127,38 @@ class RegistrarFormTest(TestCase):
                 "fecha_caja": date.today(),
                 "estacion": self.estacion.pk,
                 "cuenta": self.cuenta.pk,
-                "tipo_movimiento": RegistrarMovimiento.Tipo.ENTRADA,
+                "tipo_movimiento": Registro_Movimientos.Tipo.ENTRADA,
                 "monto": "420.00",
                 "descripcion": "prueba registro con post usuario con permisos",
             }
         )
         self.assertEqual(response.status_code, 302)
-        registros_finales = RegistrarMovimiento.objects.count()
+        registros_finales = Registro_Movimientos.objects.count()
         self.assertEqual(registros_iniciales + 1, registros_finales, "No se registró el movimientos del usuario con acceso")
-        registro = RegistrarMovimiento.objects.latest("id")
+        registro = Registro_Movimientos.objects.latest("id")
         self.assertEqual(registro.creado_por, self.usuario_con_permisos, "ID de usuario modificado por el usuario")
 
     def test_user_con_permisos_dato_invalido_captura(self):
-        registros_iniciales = RegistrarMovimiento.objects.count()
+        registros_iniciales = Registro_Movimientos.objects.count()
         self.client.force_login(self.usuario_con_permisos)
         response = self.client.post(
             reverse("movs:registro"),
             {
-                "estacion": "AGUASCALIENTES",
-                "concepto": "prueba registro con post usuario con permisos",
-                "monto": 122,
-                "fecha": date.today()
-            })
+                "fecha_caja": date.today(),
+                "estacion": self.estacion.pk,
+                "cuenta": self.cuenta.pk,
+                "tipo_movimiento": Registro_Movimientos.Tipo.ENTRADA,
+                "monto": "0.00",
+                "descripcion": "prueba registro con post usuario con permisos",
+            }
+        )
         self.assertEqual(response.status_code, 200)
-        registros_finales = RegistrarMovimiento.objects.count()
+        registros_finales = Registro_Movimientos.objects.count()
         self.assertEqual(registros_iniciales, registros_finales, "No se registró el movimientos del usuario con acceso")
         self.assertTrue(response.context["form"].errors)
 
     def test_post_sin_csrf_token(self):
-        registros_iniciales = RegistrarMovimiento.objects.count()
+        registros_iniciales = Registro_Movimientos.objects.count()
         cliente = Client(enforce_csrf_checks=True)
         cliente.force_login(self.usuario_con_permisos)
 
@@ -170,6 +173,6 @@ class RegistrarFormTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
-        registros_finales = RegistrarMovimiento.objects.count()
+        registros_finales = Registro_Movimientos.objects.count()
 
         self.assertEqual(registros_iniciales, registros_finales )

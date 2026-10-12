@@ -1,11 +1,11 @@
 from django.forms import ModelForm, ValidationError, forms
-from apps.movs.models import RegistrarMovimiento
+from apps.movs.models import Registro_Movimientos
 from django.utils import timezone
 from apps.catalogos.models import Cuenta, Estacion
 
 class RegistrarForm(ModelForm):
     class Meta:
-        model = RegistrarMovimiento
+        model = Registro_Movimientos
         fields = ['fecha_caja', 'estacion', 'cuenta', 'tipo_movimiento', 'monto', 'descripcion' ]
 
     def clean_fecha(self):

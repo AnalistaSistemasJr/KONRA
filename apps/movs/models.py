@@ -4,11 +4,11 @@ from django.core.validators import MinValueValidator
 from decimal import Decimal
 from apps.catalogos.models import Estacion, Cuenta
 
-class RegistrarMovimiento(models.Model):
+class Registro_Movimientos(models.Model):
     class Tipo(models.TextChoices):
         ENTRADA = "E", "Entrada"
         SALIDA = "S", "Salida"
-
+    
     fecha_caja = models.DateField("Fecha de caja")
     estacion = models.ForeignKey(Estacion, on_delete=models.PROTECT, related_name="movimientos")
     cuenta = models.ForeignKey(Cuenta, on_delete=models.PROTECT, related_name="movimientos")

@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from apps.movs.forms import RegistrarForm
 
 @login_required
-@permission_required('movs.add_registrarmovimiento', raise_exception=True)
+@permission_required('movs.add_registro_movimientos', raise_exception=True)
 def registrar_movimiento(request):
     if request.method == 'POST':
         form = RegistrarForm(request.POST)

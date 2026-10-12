@@ -7,7 +7,7 @@ from django.db import IntegrityError, transaction
 from django.db.models.deletion import ProtectedError
 from django.contrib.auth.models import Group
 from django.core.management import call_command
-from apps.movs.models import RegistrarMovimiento
+from apps.movs.models import Registro_Movimientos
 from apps.catalogos.models import Estacion, Cuenta
 
 class ModeloRegistroTest(TestCase):
@@ -37,7 +37,7 @@ class ModeloRegistroTest(TestCase):
             fecha_caja=date.today(),
             estacion=self.estacion,
             cuenta=self.cuenta,
-            tipo_movimiento=RegistrarMovimiento.Tipo.ENTRADA,
+            tipo_movimiento=Registro_Movimientos.Tipo.ENTRADA,
             monto=Decimal("20.00"),
             descripcion="GASTO DE PRUEBA",
             creado_por=self.usuario,
@@ -47,22 +47,35 @@ class ModeloRegistroTest(TestCase):
 
     def test_Mov_Cargo_Cero(self):
         with self.assertRaises(IntegrityError), transaction.atomic():
-            RegistrarMovimiento.objects.create(**self.datos(monto = Decimal("0.00")))
+            Registro_Movimientos.objects.create(**self.datos(monto = Decimal("0.00")))
 
-    # def test_no_permite_borrar_estacion_con_movimientos(self):
-    #     RegistrarMovimiento.objects.create(
-    #         fecha_caja=date.today(),
-    #         estacion=self.estacion,
-    #         cuenta=self.cuenta,
-    #         tipo_movimiento=RegistrarMovimiento.Tipo.ENTRADA,
-    #         monto=100,
-    #         descripcion="Prueba",
-    #         creado_por=self.usuario,
-    #     )
+    def test_no_permite_borrar_estacion_con_movimientos(self):
+        Registro_Movimientos.objects.create(
+            fecha_caja=date.today(),
+            estacion=self.estacion,
+            cuenta=self.cuenta,
+            tipo_movimiento=Registro_Movimientos.Tipo.ENTRADA,
+            monto=100,
+            descripcion="Prueba",
+            creado_por=self.usuario,
+        )
 
-    #     with self.assertRaises(ProtectedError):
-    #         self.estacion.delete()
+        with self.assertRaises(ProtectedError):
+            self.estacion.delete()
 
-    #     self.assertTrue(
-    #         Estacion.objects.filter(pk=self.estacion.pk).exists()
-    #     )      
+        self.assertTrue(
+            Estacion.objects.filter(pk=self.estacion.pk).exists()
+        )     
+
+    def test_confirmacion_llenada_campos_automaticos(self):
+        registros_iniciales = Registro_Movimientos.objects.count()
+        Registro_Movimientos.objects.create(
+            fecha_caja = date.today(),
+            estacion = self.estacion,
+            cuenta = self.cuenta,
+            tipo_movimiento = Registro_Movimientos.Tipo.SALIDA,
+            monto = "-2335.28",
+            descripcion = "Prueba llenado automatico", 
+        ) 
+        registros_finales = Registro_Movimientos.objects.count()
+        self.assertEqual(registros_iniciales + 1, registros_finales)
