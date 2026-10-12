@@ -1,13 +1,13 @@
 ROLES = {
     "Auditor": [
-        "movs.view_registrarcargo",
-        "movs.add_registrarcargo",
+        "movs.view_registrarmovimiento",
+        "movs.add_registrarmovimiento",
     ],
     "Visualizador": [
-        "movs.view_registrarcargo",
+        "movs.view_registrarmovimiento",
     ],
     "Soporte":[
-        "movs.view_registrarcargo",
+        "movs.view_registrarmovimiento",
         "catalogos.view_estacion",
         "catalogos.add_estacion",
         "catalogos.change_estacion",
