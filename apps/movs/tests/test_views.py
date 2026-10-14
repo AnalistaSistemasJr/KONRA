@@ -6,13 +6,14 @@ from django.test.utils import CaptureQueriesContext
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management import call_command
+from io import StringIO
 from apps.movs.models import Registro_Movimientos, Tipo_movimiento
 from apps.catalogos.models import Cuenta, Estacion, TipoCuenta
 
 class UserTestAuth(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command("setup_roles")
+        call_command("setup_roles", stdout=StringIO())
         cls.usuario = get_user_model().objects.create_user(
             username="user1prueba",
             password="345678uhbgt5"
@@ -77,7 +78,7 @@ class UserTestAuth(TestCase):
 class RegistroMovimientosViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command('setup_roles')
+        call_command("setup_roles", stdout=StringIO())
         cls.usuario_permisos = get_user_model().objects.create_user(
             username = "user_permisos",
             password = "cr567jbvt3"

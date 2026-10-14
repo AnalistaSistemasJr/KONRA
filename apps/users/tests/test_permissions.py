@@ -4,12 +4,12 @@ from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
 from django.core.management import call_command, CommandError
 from unittest.mock import patch
-
+from io import StringIO
 
 class PermissionsTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command("setup_roles")       
+        call_command("setup_roles", stdout=StringIO())     
         cls.user_wo_perm = get_user_model().objects.create_user(
             username = "user1_perm", password = "rt678ijhgt5"
         )
@@ -44,7 +44,7 @@ class PermissionsTest(TestCase):
     def test_error_si_permiso_no_existe(self):
 
         with self.assertRaises(CommandError) as exc:
-            call_command("setup_roles")
+            call_command("setup_roles", stdout=StringIO())
 
         self.assertEqual(
             str(exc.exception),
@@ -69,7 +69,7 @@ class PermissionsTest(TestCase):
             },
             clear=True,
         ):
-            call_command("setup_roles")
+            call_command("setup_roles", stdout=StringIO())
 
         self.assertTrue(
             Group.objects.filter(name="Rol_nuevo").exists()
@@ -92,7 +92,7 @@ class PermissionsTest(TestCase):
             },
             clear=True,
         ):
-            call_command("setup_roles")
+            call_command("setup_roles", stdout=StringIO())
 
         grupo.refresh_from_db()
 

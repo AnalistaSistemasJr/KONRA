@@ -4,13 +4,14 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.contrib.auth.models import Group
 from datetime import date, timedelta
+from io import StringIO
 from apps.movs.models import Registro_Movimientos, Tipo_movimiento
 from apps.catalogos.models import Estacion, Cuenta, TipoCuenta
 
 class RegistrarFormTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command('setup_roles')
+        call_command("setup_roles", stdout=StringIO())
         cls.usuario_sin_grupo = get_user_model().objects.create_user(
             username = "user1_no_grupo",
             password = "hjkjgt6787tf"

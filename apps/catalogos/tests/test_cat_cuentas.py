@@ -12,7 +12,7 @@ from apps.catalogos.management.commands.import_cuentas import Command
 class ModeloCatalogoTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command('setup_roles')
+        call_command("setup_roles", stdout=StringIO())
         cls.usuario_sin_grupo = get_user_model().objects.create_user(
             username = "user1",
             password = "ft6789okjh"
@@ -137,26 +137,6 @@ class ImportarCuentasCommandTest(TestCase):
         call_command("import_cuentas", ruta, aplicar=True)
 
         self.assertEqual(Cuenta.objects.count(), 2)
-
-    # def test_rollback_si_hay_fila_invalida_al_final(self):
-    #     ruta = self.crear_csv(
-    #         "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-    #         "1000,Caja,Activos,Circulante,Efectivo,true\n"
-    #         "1001,Bancos,Activos,Circulante,Bancos,true\n"
-    #         "1002,Cuenta inválida,TIPO_INEXISTENTE,Circulante,Prueba,true\n"
-    #     )
-
-    #     try:
-    #         call_command(
-    #             "importar_cuentas",
-    #             ruta,
-    #             aplicar=True,
-    #         )
-    #         self.fail("Se esperaba una excepción")
-    #     except Exception:
-    #         pass
-
-    #     self.assertEqual(Cuenta.objects.count(), 0)
 
     def test_rollback_si_hay_fila_invalida_al_final(self):
         ruta = self.crear_csv(

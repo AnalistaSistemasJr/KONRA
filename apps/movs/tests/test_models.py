@@ -1,5 +1,6 @@
 from django.test import TestCase
 import sys, traceback
+from io import StringIO
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from django.urls import reverse
@@ -15,7 +16,7 @@ from apps.catalogos.models import Estacion, Cuenta, TipoCuenta
 class ModeloRegistroTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command("setup_roles")
+        call_command("setup_roles", stdout=StringIO())
         cls.usuario = get_user_model().objects.create_user(
             username="user1", 
             password = "prueba-123-xyz"
@@ -121,7 +122,7 @@ class ModeloRegistroTest(TestCase):
             "estacion" : self.estacion.pk,
             "cuenta" : self.cuenta.pk,
             "tipo_movimiento" : Tipo_movimiento.ENTRADA,
-            "monto" : Decimal("-4523.00"),
+            "monto" : Decimal("-452.00"),
             "descripcion" : "Salida de dinero", 
         })
 

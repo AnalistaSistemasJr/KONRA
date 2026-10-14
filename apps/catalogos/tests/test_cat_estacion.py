@@ -13,7 +13,7 @@ from apps.catalogos.management.commands.import_estaciones import Command
 class ModeloCatalogoTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command('setup_roles')
+        call_command("setup_roles", stdout=StringIO())
         cls.usuario_sin_grupo = get_user_model().objects.create_user(
             username = "user1",
             password = "ft6789okjh"
