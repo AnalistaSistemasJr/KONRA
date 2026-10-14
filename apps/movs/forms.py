@@ -8,7 +8,7 @@ class RegistrarForm(ModelForm):
         model = Registro_Movimientos
         fields = ['fecha_caja', 'estacion', 'cuenta', 'tipo_movimiento', 'monto', 'descripcion' ]
 
-    def clean_fecha(self):
+    def clean_fecha_caja(self):
         fecha = self.cleaned_data["fecha_caja"]
         if fecha > timezone.localdate():
             raise forms.ValidationError("La fecha no puede ser futura.")

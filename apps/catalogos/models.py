@@ -33,14 +33,18 @@ class Estacion(models.Model):
     def __str__(self):
         return f"{self.numero_estacion} - {self.estacion}"
 
+class TipoCuenta(models.TextChoices):
+    ACTIVOS  = "Activos", "Activos"
+    PASIVOS  = "Pasivos", "Pasivos"
+    CAPITAL  = "Capital", "Capital"
+    INGRESOS = "Ingresos", "Ingresos"
+    GASTOS   = "Gastos", "Gastos"
+    COSTOS   = "Costos", "Costos"
 class Cuenta(models.Model):
-    TIPOS_CUENTA = [("Activos", "Activos"), ("Pasivos", "Pasivos"),
-                    ("Capital", "Capital"), ("Ingresos", "Ingresos"),
-                    ("Gastos", "Gastos"), ("Costos", "Costos")]
-    
+
     numero_cuenta = models.CharField(max_length = 20)
     nombre_cuenta = models.CharField(max_length = 100)
-    tipo_cuenta = models.CharField(max_length = 50, choices = TIPOS_CUENTA)
+    tipo_cuenta = models.CharField(max_length = 50, choices = TipoCuenta.choices)
     rubro = models.CharField(max_length = 100)
     especificacion = models.CharField(max_length = 100, blank = True)
     cuenta_activa = models.BooleanField(default = True)
@@ -54,6 +58,12 @@ class Cuenta(models.Model):
                 'numero_cuenta',
                 name = "numero_cuenta_unico",
                 violation_error_message = "Ya existe una cuenta registrada con dicho número"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    tipo_cuenta__in=TipoCuenta.values
+                ),
+                name="tipo_cuenta_valido",
             )
         ]
 

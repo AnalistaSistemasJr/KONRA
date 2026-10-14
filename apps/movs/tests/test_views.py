@@ -1,8 +1,13 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.db import connection
+from datetime import date, datetime
+from django.test.utils import CaptureQueriesContext
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management import call_command
+from apps.movs.models import Registro_Movimientos, Tipo_movimiento
+from apps.catalogos.models import Cuenta, Estacion, TipoCuenta
 
 class UserTestAuth(TestCase):
     @classmethod
@@ -38,7 +43,7 @@ class UserTestAuth(TestCase):
         response = self.client.get(reverse("movs:registro"))
         self.assertEqual(response.status_code, 200)
 
-    def test_login_correcto(self):
+    def test_login_correcto_user_id(self):
         response = self.client.post(
             reverse("users:login"),
             {"username": "user1prueba", "password": "345678uhbgt5"},
@@ -68,3 +73,68 @@ class UserTestAuth(TestCase):
             {"username": "user1prueba", "password": "345678uhbgt5"},
         )
         self.assertRedirects(response, destino, fetch_redirect_response=False)
+
+class RegistroMovimientosViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command('setup_roles')
+        cls.usuario_permisos = get_user_model().objects.create_user(
+            username = "user_permisos",
+            password = "cr567jbvt3"
+        )
+        cls.usuario_permisos.groups.add(Group.objects.get(name = "Auditor"))
+
+        cls.estacion = Estacion.objects.create(
+            numero_estacion = 1,
+            estacion = "ESTACION 1",
+            estacion_activa = True
+        )
+
+        cls.cuenta = Cuenta.objects.create(
+            numero_cuenta = "10-00-00-00-00",
+            nombre_cuenta = "Cuenta testeo",
+            cuenta_activa = True
+        )
+    
+    def test_lista_mismo_numero_consultas_con_cantidades_diferentes_movimientos(self):
+        self.client.force_login(self.usuario_permisos)
+
+        # Crear 3 movimientos
+        for _ in range(3):
+            Registro_Movimientos.objects.create(
+                fecha_caja=date.today(),
+                estacion=self.estacion,
+                cuenta=self.cuenta,
+                tipo_movimiento=Tipo_movimiento.ENTRADA,
+                monto=100,
+                descripcion="Prueba",
+                creado_por=self.usuario_permisos,
+            )
+
+        with CaptureQueriesContext(connection) as ctx:
+            self.client.get(reverse("movs:consulta"))
+
+        consultas_con_3 = len(ctx)
+
+        # Crear 10 más (total 13)
+        for _ in range(10):
+            Registro_Movimientos.objects.create(
+                fecha_caja=date.today(),
+                estacion=self.estacion,
+                cuenta=self.cuenta,
+                tipo_movimiento=Tipo_movimiento.ENTRADA,
+                monto=100,
+                descripcion="Prueba",
+                creado_por=self.usuario_permisos,
+            )
+
+        with CaptureQueriesContext(connection) as ctx:
+            self.client.get(reverse("movs:consulta"))
+
+        consultas_con_13 = len(ctx)
+
+        self.assertEqual(
+            consultas_con_3,
+            consultas_con_13
+        )
+        print(f"Total primeros registros {consultas_con_3}, total segundos registros {consultas_con_13}")

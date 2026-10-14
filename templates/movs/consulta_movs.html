@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Consulta</title>
+</head>
+
+<body>
+    <h2>Mis movimientos</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Estación</th>
+                <th>Cuenta</th>
+                <th>Tipo</th>
+                <th>Monto</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for movimiento in movimientos %}
+            <tr>
+                <td>{{ movimiento.fecha_caja }}</td>
+                <td>{{ movimiento.estacion }}</td>
+                <td>{{ movimiento.cuenta }}</td>
+                <td>{{ movimiento.get_tipo_movimiento_display }}</td>
+                <td>{{ movimiento.monto }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">
+                    No hay movimientos registrados
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -7,7 +7,6 @@ ROLES = {
         "movs.view_registro_movimientos",
     ],
     "Soporte":[
-        "movs.view_registro_movimientos",
         "catalogos.view_estacion",
         "catalogos.add_estacion",
         "catalogos.change_estacion",

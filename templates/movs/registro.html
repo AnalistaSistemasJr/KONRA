@@ -17,6 +17,10 @@
         {% csrf_token %}
         <button type="submit">Cerrar sesión</button>
     </form>
+    <br>
+    <a href="{% url 'movs:consulta' %}" class="btn btn-primary">
+        Ver movimientos
+    </a>
 </body>
 
 </html>

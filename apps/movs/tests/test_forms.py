@@ -4,8 +4,8 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.contrib.auth.models import Group
 from datetime import date, timedelta
-from apps.movs.models import Registro_Movimientos
-from apps.catalogos.models import Estacion, Cuenta
+from apps.movs.models import Registro_Movimientos, Tipo_movimiento
+from apps.catalogos.models import Estacion, Cuenta, TipoCuenta
 
 class RegistrarFormTest(TestCase):
     @classmethod
@@ -107,7 +107,7 @@ class RegistrarFormTest(TestCase):
                 "fecha_caja": date.today(),
                 "estacion": self.estacion.pk,
                 "cuenta": self.cuenta.pk,
-                "tipo_movimiento": Registro_Movimientos.Tipo.ENTRADA,
+                "tipo_movimiento": Tipo_movimiento.ENTRADA,
                 "monto": "420.00",
                 "descripcion": "prueba registro con post usuario con permisos",
             }
@@ -127,7 +127,7 @@ class RegistrarFormTest(TestCase):
                 "fecha_caja": date.today(),
                 "estacion": self.estacion.pk,
                 "cuenta": self.cuenta.pk,
-                "tipo_movimiento": Registro_Movimientos.Tipo.ENTRADA,
+                "tipo_movimiento": Tipo_movimiento.ENTRADA,
                 "monto": "420.00",
                 "descripcion": "prueba registro con post usuario con permisos",
             }
@@ -147,7 +147,7 @@ class RegistrarFormTest(TestCase):
                 "fecha_caja": date.today(),
                 "estacion": self.estacion.pk,
                 "cuenta": self.cuenta.pk,
-                "tipo_movimiento": Registro_Movimientos.Tipo.ENTRADA,
+                "tipo_movimiento": Tipo_movimiento.ENTRADA,
                 "monto": "0.00",
                 "descripcion": "prueba registro con post usuario con permisos",
             }
