@@ -137,4 +137,3 @@ class RegistroMovimientosViewTest(TestCase):
             consultas_con_3,
             consultas_con_13
         )
-        print(f"Total primeros registros {consultas_con_3}, total segundos registros {consultas_con_13}")

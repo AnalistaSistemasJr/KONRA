@@ -1,10 +1,14 @@
 from django.test import TestCase
 from django.urls import reverse
-from django.core.management import call_command
+from django.core.management import call_command, CommandError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db import IntegrityError, transaction
 from apps.catalogos.models import Estacion, Cuenta
+from unittest.mock import patch
+from io import StringIO
+from tempfile import NamedTemporaryFile
+from apps.catalogos.management.commands.import_estaciones import Command
 
 class ModeloCatalogoTest(TestCase):
     @classmethod
@@ -72,4 +76,254 @@ class ModeloCatalogoTest(TestCase):
         self.assertEqual(response.status_code, 403)
         estaciones_finales = Estacion.objects.count()
         self.assertEqual(estaciones_iniciales,estaciones_finales)
-        
+
+
+class ImportarEstacionesCommandTest(TestCase):
+
+    def crear_csv(self, contenido):
+        archivo = NamedTemporaryFile(
+            mode="w",
+            suffix=".csv",
+            delete=False,
+            encoding="utf-8"
+        )
+        archivo.write(contenido)
+        archivo.close()
+        return archivo.name
+
+    def test_simulacion_no_crea_registros(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            "100,ESTACION NORTE,GASOLINERA SA,true\n"
+        )
+
+        salida = StringIO()
+
+        call_command(
+            "import_estaciones",
+            ruta,
+            stdout=salida
+        )
+
+        self.assertEqual(Estacion.objects.count(), 0)
+
+        self.assertIn(
+            "Simulación exitosa",
+            salida.getvalue()
+        )
+
+    def test_aplicar_crea_estaciones(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            "100,ESTACION NORTE,GASOLINERA SA,true\n"
+            "101,ESTACION SUR,GASOLINERA SA,true\n"
+        )
+
+        call_command(
+            "import_estaciones",
+            ruta,
+            aplicar=True
+        )
+
+        self.assertEqual(
+            Estacion.objects.count(),
+            2
+        )
+
+    def test_mismo_archivo_dos_veces_no_duplica(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            "100,ESTACION NORTE,GASOLINERA SA,true\n"
+            "101,ESTACION SUR,GASOLINERA SA,true\n"
+        )
+
+        call_command(
+            "import_estaciones",
+            ruta,
+            aplicar=True
+        )
+
+        self.assertEqual(
+            Estacion.objects.count(),
+            2
+        )
+
+        call_command(
+            "import_estaciones",
+            ruta,
+            aplicar=True)
+
+        self.assertEqual(
+            Estacion.objects.count(),
+            2
+        )
+
+    def test_fila_invalida_sin_numero_estacion(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            ",ESTACION NORTE,GASOLINERA SA,true\n"
+        )
+
+        with self.assertRaises(CommandError):
+            call_command(
+                "import_estaciones",
+                ruta
+            )
+
+        self.assertEqual(
+            Estacion.objects.count(),
+            0
+        )
+
+    def test_numero_estacion_duplicado(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            "100,ESTACION NORTE,GASOLINERA SA,true\n"
+            "100,ESTACION SUR,GASOLINERA SA,true\n"
+        )
+
+        with self.assertRaisesMessage(
+            CommandError,
+            "duplicado"
+        ):
+            call_command(
+                "import_estaciones",
+                ruta
+            )
+
+        self.assertEqual(
+            Estacion.objects.count(),
+            0
+        )
+
+    def test_espacios_sobrantes_se_eliminan(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            " 100, ESTACION NORTE , GASOLINERA SA , true\n"
+        )
+
+        call_command(
+            "import_estaciones",
+            ruta,
+            aplicar=True
+        )
+
+        estacion = Estacion.objects.get()
+
+        self.assertEqual(
+            estacion.numero_estacion,
+            100
+        )
+
+        self.assertEqual(
+            estacion.estacion,
+            "ESTACION NORTE"
+        )
+
+        self.assertEqual(
+            estacion.razon_social,
+            "GASOLINERA SA"
+        )
+
+    def test_espacios_no_generan_duplicados(self):
+        ruta1 = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            "100,ESTACION NORTE,GASOLINERA SA,true\n"
+        )
+
+        ruta2 = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            " 100 ,ESTACION NORTE,GASOLINERA SA,true\n"
+        )
+
+        call_command(
+            "import_estaciones",
+            ruta1,
+            aplicar=True
+        )
+
+        call_command(
+            "import_estaciones",
+            ruta2,
+            aplicar=True
+        )
+
+        self.assertEqual(
+            Estacion.objects.count(),
+            1
+        )
+
+    def test_encabezados_faltantes(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion\n"
+            "100,ESTACION NORTE\n"
+        )
+
+        with self.assertRaisesMessage(
+            CommandError,
+            "columnas obligatorias"
+        ):
+            call_command(
+                "import_estaciones",
+                ruta
+            )
+
+    def test_archivo_vacio(self):
+        ruta = self.crear_csv("")
+
+        with self.assertRaisesMessage(
+            CommandError,
+            "vacío"
+        ):
+            call_command(
+                "import_estaciones",
+                ruta
+            )
+
+    def test_error_generico_al_leer_archivo(self):
+        with patch(
+            "apps.catalogos.management.commands.import_estaciones.open",
+            side_effect=Exception("error de lectura")
+        ):
+            with self.assertRaisesMessage(
+                CommandError,
+                "Error al leer el archivo: error de lectura"
+            ):
+                call_command(
+                    "import_estaciones",
+                    "archivo.csv"
+                )
+
+    def test_error_escritura_hace_rollback(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            "100,ESTACION NORTE,GASOLINERA SA,true\n"
+        )
+
+        with patch(
+            "apps.catalogos.management.commands.import_estaciones.Estacion.objects.update_or_create",
+            side_effect=Exception("fallo bd")
+        ):
+            with self.assertRaisesMessage(
+                CommandError,
+                "Error al escribir en la base de datos"
+            ):
+                call_command(
+                    "import_estaciones",
+                    ruta,
+                    aplicar=True
+                )
+
+        self.assertEqual(
+            Estacion.objects.count(),
+            0
+        )
+
+    def test_leer_archivo_inexistente(self):
+        comando = Command()
+
+        with self.assertRaisesMessage(
+            CommandError,
+            "El archivo 'archivo_inexistente.csv' no existe."
+        ):
+            comando.leer("archivo_inexistente.csv")
