@@ -303,3 +303,44 @@ class ImportarCuentasCommandTest(TestCase):
             Cuenta.objects.count(),
             0
         )
+
+    def test_rollback_si_falla_segunda_fila(self):
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "1000,Caja,Activos,Circulante,Efectivo,true\n"
+            "2000,Caja 2,Pasivos,Efectivo,Efectivo,true\n"
+        )
+
+        llamadas = 0
+
+        def falla_segunda(*args, **kwargs):
+            nonlocal llamadas
+            llamadas += 1
+
+            if llamadas == 2:
+                raise Exception("fallo en segunda fila")
+
+            return (
+                Cuenta.objects.create(
+                    numero_cuenta="1000",
+                    nombre_cuenta="Caja 2",
+                    tipo_cuenta="Pasivos",
+                    rubro="Circulante",
+                    especificacion="",
+                    cuenta_activa=True
+                ),
+                True,
+            )
+
+        with patch(
+            "apps.catalogos.management.commands.import_cuentas.Cuenta.objects.update_or_create",
+            side_effect=falla_segunda,
+        ):
+            with self.assertRaises(CommandError):
+                call_command(
+                    "import_cuentas",
+                    ruta,
+                    aplicar=True,
+                )
+
+        self.assertEqual(Cuenta.objects.count(), 0)

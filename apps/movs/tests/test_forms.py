@@ -178,3 +178,20 @@ class RegistrarFormTest(TestCase):
         registros_finales = Registro_Movimientos.objects.count()
 
         self.assertEqual(registros_iniciales, registros_finales )
+
+    def test_validacion_restriccion_monto(self):
+        registros_iniciales = Registro_Movimientos.objects.count()
+        self.client.force_login(self.usuario_con_permisos)
+        response = self.client.post(
+            reverse("movs:registro"),
+            {
+                "fecha_caja": date.today(),
+                "estacion": self.estacion.pk,
+                "cuenta": self.cuenta.pk,
+                "tipo_movimiento": Tipo_movimiento.ENTRADA,
+                "monto": "2000000.00",
+                "descripcion": "prueba registro con post usuario con permisos",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Registro_Movimientos.objects.count(), registros_iniciales)
