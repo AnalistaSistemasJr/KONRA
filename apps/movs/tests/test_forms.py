@@ -179,19 +179,38 @@ class RegistrarFormTest(TestCase):
 
         self.assertEqual(registros_iniciales, registros_finales )
 
-    def test_validacion_restriccion_monto(self):
+    def test_validacion_restriccion_monto_limite(self):
         registros_iniciales = Registro_Movimientos.objects.count()
         self.client.force_login(self.usuario_con_permisos)
-        response = self.client.post(
-            reverse("movs:registro"),
-            {
-                "fecha_caja": date.today(),
-                "estacion": self.estacion.pk,
-                "cuenta": self.cuenta.pk,
-                "tipo_movimiento": Tipo_movimiento.ENTRADA,
-                "monto": "2000000.00",
-                "descripcion": "prueba registro con post usuario con permisos",
-            }
-        )
-        self.assertEqual(response.status_code, 200)
+        for monto in ["2000000.00","-3000000.00"]:
+            response = self.client.post(
+                reverse("movs:registro"),
+                {
+                    "fecha_caja": date.today(),
+                    "estacion": self.estacion.pk,
+                    "cuenta": self.cuenta.pk,
+                    "tipo_movimiento": Tipo_movimiento.ENTRADA,
+                    "monto": monto,
+                    "descripcion": "prueba registro con post usuario con permisos",
+                }
+            )
+            self.assertEqual(response.status_code, 200)
         self.assertEqual(Registro_Movimientos.objects.count(), registros_iniciales)
+
+    def test_validacion_restriccion_monto_aceptado(self):
+        registros_iniciales = Registro_Movimientos.objects.count()
+        self.client.force_login(self.usuario_con_permisos)
+        for monto in ["200000.00","-300000.00"]:
+            response = self.client.post(
+                reverse("movs:registro"),
+                {
+                    "fecha_caja": date.today(),
+                    "estacion": self.estacion.pk,
+                    "cuenta": self.cuenta.pk,
+                    "tipo_movimiento": Tipo_movimiento.ENTRADA,
+                    "monto": monto,
+                    "descripcion": "prueba registro con post usuario con permisos",
+                }
+            )
+            self.assertEqual(response.status_code, 302)
+        self.assertGreater(Registro_Movimientos.objects.count(), registros_iniciales)

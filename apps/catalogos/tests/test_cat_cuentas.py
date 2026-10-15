@@ -254,7 +254,7 @@ class ImportarCuentasCommandTest(TestCase):
                 ruta
             )
 
-    def test_validar_varias_filas_validas(self):
+    def test_fila_invalida_lanza_commanderror(self):
         filas = [
             {
                 "numero_cuenta": "1000",
