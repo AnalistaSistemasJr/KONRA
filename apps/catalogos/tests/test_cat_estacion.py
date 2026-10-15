@@ -175,6 +175,62 @@ class ImportarEstacionesCommandTest(TestCase):
             0
         )
 
+    def test_rollback_si_hay_filas_invalidas(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            "100,ESTACION NORTE,GASOLINERA SA,true\n"
+            "200,ESTACION ESTE,GASOLINERA SA,false\n"
+            "NUM_EST,ESTACION SUR,GASOLINERA SA,true\n"
+        )
+
+        with self.assertRaises(Exception):
+            call_command(
+                "import_estaciones",
+                ruta,
+                aplicar=True,
+            )
+
+        self.assertEqual(Estacion.objects.count(), 0)
+
+    def test_rollback_si_falla_segunda_fila(self):
+        ruta = self.crear_csv(
+            "numero_estacion,estacion,razon_social,estacion_activa\n"
+            "100,ESTACION NORTE,GASOLINERA SA,true\n"
+            "101,ESTACION SUR,GASOLINERA SA,true\n"
+        )
+
+        llamadas = 0
+
+        def falla_segunda(*args, **kwargs):
+            nonlocal llamadas
+            llamadas += 1
+
+            if llamadas == 2:
+                raise Exception("fallo en segunda fila")
+
+            return (
+                Estacion.objects.create(
+                    numero_estacion=100,
+                    estacion="ESTACION NORTE",
+                    razon_social="GASOLINERA SA",
+                    estacion_activa=True,
+                ),
+                True,
+            )
+
+        with patch(
+            "apps.catalogos.management.commands.import_estaciones.Estacion.objects.update_or_create",
+            side_effect=falla_segunda,
+        ):
+            with self.assertRaises(CommandError):
+                call_command(
+                    "import_estaciones",
+                    ruta,
+                    aplicar=True,
+                )
+
+        self.assertEqual(Estacion.objects.count(), 0)
+
     def test_numero_estacion_duplicado(self):
         ruta = self.crear_csv(
             "numero_estacion,estacion,razon_social,estacion_activa\n"

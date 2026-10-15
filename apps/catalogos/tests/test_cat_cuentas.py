@@ -94,7 +94,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_simulacion_no_escribe_registros(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,ACTIVO,CIRCULANTE,EFECTIVO,true\n"
+            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
         )
 
         salida = StringIO()
@@ -111,8 +111,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_aplicar_crea_registros(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,ACTIVO,CIRCULANTE,EFECTIVO,true\n"
-            "1001,Bancos,ACTIVO,CIRCULANTE,BANCOS,true\n"
+            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
+            "1001,Bancos,Activos,CIRCULANTE,BANCOS,true\n"
         )
 
         call_command(
@@ -126,8 +126,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_mismo_archivo_dos_veces_no_duplica(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,ACTIVO,CIRCULANTE,EFECTIVO,true\n"
-            "1001,Bancos,ACTIVO,CIRCULANTE,BANCOS,true\n"
+            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
+            "1001,Bancos,Activos,CIRCULANTE,BANCOS,true\n"
         )
 
         call_command("import_cuentas", ruta, aplicar=True)
@@ -148,7 +148,7 @@ class ImportarCuentasCommandTest(TestCase):
 
         with self.assertRaises(Exception):
             call_command(
-                "importar_cuentas",
+                "import_cuentas",
                 ruta,
                 aplicar=True,
             )
@@ -158,8 +158,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_numero_cuenta_duplicado_en_csv(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,ACTIVO,CIRCULANTE,EFECTIVO,true\n"
-            "1000,Bancos,ACTIVO,CIRCULANTE,BANCOS,true\n"
+            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
+            "1000,Bancos,Activos,CIRCULANTE,BANCOS,true\n"
         )
 
         with self.assertRaisesMessage(
@@ -173,7 +173,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_espacios_sobrantes_se_eliminan(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            " 1000 , Caja General , ACTIVO , CIRCULANTE , EFECTIVO , true\n"
+            " 1000 , Caja General , Activos , CIRCULANTE , EFECTIVO , true\n"
         )
 
         call_command(
@@ -190,12 +190,12 @@ class ImportarCuentasCommandTest(TestCase):
     def test_espacios_no_generan_duplicados(self):
         ruta1 = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,ACTIVO,CIRCULANTE,EFECTIVO,true\n"
+            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
         )
 
         ruta2 = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            " 1000 ,Caja,ACTIVO,CIRCULANTE,EFECTIVO,true\n"
+            " 1000 ,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
         )
 
         call_command("import_cuentas", ruta1, aplicar=True)

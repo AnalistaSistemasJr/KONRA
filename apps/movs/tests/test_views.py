@@ -94,6 +94,7 @@ class RegistroMovimientosViewTest(TestCase):
         cls.cuenta = Cuenta.objects.create(
             numero_cuenta = "10-00-00-00-00",
             nombre_cuenta = "Cuenta testeo",
+            tipo_cuenta = "Activos",
             cuenta_activa = True
         )
     

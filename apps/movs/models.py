@@ -23,11 +23,16 @@ class Registro_Movimientos(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                        ~models.Q(monto=0)
-                        & models.Q(monto__gt=-1000000)
-                        & models.Q(monto__lt=1000000)),
+                        ~models.Q(monto=0)),
                 name = "monto_registro_diferente_de_cero", 
                 violation_error_message = "El monto debe de ser diferente de cero"
+                ),
+            models.CheckConstraint(
+                condition=(
+                        models.Q(monto__gte=-1000000)
+                        & models.Q(monto__lte=1000000)),
+                name = "monto_dentro_del_limite", 
+                violation_error_message = "El monto supera el límite establecido"
                 ),
             models.CheckConstraint(
                 condition = models.Q(

@@ -40,11 +40,13 @@ class TipoCuenta(models.TextChoices):
     INGRESOS = "Ingresos", "Ingresos"
     GASTOS   = "Gastos", "Gastos"
     COSTOS   = "Costos", "Costos"
+    DEFAULT  = "No_definido", "No_definido"
+
 class Cuenta(models.Model):
 
     numero_cuenta = models.CharField(max_length = 20)
     nombre_cuenta = models.CharField(max_length = 100)
-    tipo_cuenta = models.CharField(max_length = 50, choices = TipoCuenta.choices)
+    tipo_cuenta = models.CharField(max_length = 50, choices = TipoCuenta.choices, default=TipoCuenta.DEFAULT)
     rubro = models.CharField(max_length = 100)
     especificacion = models.CharField(max_length = 100, blank = True)
     cuenta_activa = models.BooleanField(default = True)

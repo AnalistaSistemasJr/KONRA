@@ -32,6 +32,7 @@ class ModeloRegistroTest(TestCase):
         cls.cuenta = Cuenta.objects.create(
             numero_cuenta = "40-00-00-00-00",
             nombre_cuenta = "Ingresos",
+            tipo_cuenta = "Activos",
             cuenta_activa = True
         )
 
