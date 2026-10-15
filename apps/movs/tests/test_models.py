@@ -178,4 +178,33 @@ class ModeloRegistroTest(TestCase):
         })
         self.assertEqual(response.status_code, 200)  
         registros_finales = Registro_Movimientos.objects.count()
-        self.assertEqual(registros_iniciales, registros_finales)       
+        self.assertEqual(registros_iniciales, registros_finales)     
+
+    def test_monto_sobre_el_tope_se_rechaza(self):
+        antes = Registro_Movimientos.objects.count()
+        self.client.force_login(self.usuario)
+        response = self.client.post(reverse("movs:registro"), {
+            "fecha_caja": date.today(),
+            "estacion": self.estacion.pk,
+            "cuenta": self.cuenta.pk,
+            "tipo_movimiento": Tipo_movimiento.ENTRADA,
+            "monto": "1000000.01",
+            "descripcion": "Excede el tope",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(response.context["form"], None, "El monto supera el límite establecido")
+        self.assertEqual(Registro_Movimientos.objects.count(), antes)  
+
+    def test_monto_limite_se_acepta(self):
+            registro_iniciales = Registro_Movimientos.objects.count()
+            self.client.force_login(self.usuario)
+            response = self.client.post(reverse("movs:registro"), {
+                "fecha_caja": date.today(),
+                "estacion": self.estacion.pk,
+                "cuenta": self.cuenta.pk,
+                "tipo_movimiento": Tipo_movimiento.ENTRADA,
+                "monto": "-1000000",
+                "descripcion": "Excede el tope",
+            })
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(Registro_Movimientos.objects.count(), registro_iniciales + 1)  
