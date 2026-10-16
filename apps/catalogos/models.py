@@ -2,6 +2,17 @@ from django.db import models
 from django.db.models.functions import Upper
 from django.contrib.auth.decorators import login_required, permission_required
 
+class Rubro(models.Model):
+
+    rubro = models.CharField(max_length = 100)
+    rubro_activo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "rubro"
+        verbose_name_plural = "rubros"
+
+    def __str__(self):
+        return self.rubro
 
 class Estacion(models.Model):
     numero_estacion = models.IntegerField()
@@ -47,7 +58,8 @@ class Cuenta(models.Model):
     numero_cuenta = models.CharField(max_length = 20)
     nombre_cuenta = models.CharField(max_length = 100)
     tipo_cuenta = models.CharField(max_length = 50, choices = TipoCuenta.choices, default=TipoCuenta.DEFAULT)
-    rubro = models.CharField(max_length = 100)
+    #rubro = models.CharField(max_length = 100)
+    rubro = models.ForeignKey(Rubro, on_delete = models.PROTECT)
     especificacion = models.CharField(max_length = 100, blank = True)
     cuenta_activa = models.BooleanField(default = True)
 
@@ -71,3 +83,4 @@ class Cuenta(models.Model):
 
     def __str__(self):
         return f"{self.numero_cuenta} - {self.nombre_cuenta}"
+

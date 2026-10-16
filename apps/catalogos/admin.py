@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Estacion, Cuenta
+from .models import Estacion, Cuenta, Rubro
 
 class CatalogoAdmin(admin.ModelAdmin):
 
@@ -53,4 +53,22 @@ class CuentaAdmin(CatalogoAdmin):
     list_filter = [
         "tipo_cuenta",
         "cuenta_activa",
+    ]
+
+@admin.register(Rubro)
+class RubroAdmin(CatalogoAdmin):
+    search_fields = [
+        "id",
+        "rubro",
+        "rubro_activo",
+    ]
+
+    list_display = [
+        "id",
+        "rubro",
+        "rubro_activo",
+    ]
+
+    list_filter = [
+        "rubro"
     ]

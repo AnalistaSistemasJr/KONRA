@@ -1,7 +1,7 @@
 import csv
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from apps.catalogos.models import Cuenta
+from apps.catalogos.models import Cuenta, Rubro
 
 
 class Command(BaseCommand):
@@ -80,12 +80,14 @@ class Command(BaseCommand):
                 cuentas_creadas = 0
                 for fila in filas_ordenadas:
                     es_activa = fila["cuenta_activa"].strip().lower() in ["true", "1", "si", "sí", "yes"]
+                    rubro_nombre = fila["rubro"].strip()
+                    rubro = Rubro.objects.get(rubro=rubro_nombre)
                     cuenta, creado = Cuenta.objects.update_or_create(
                         numero_cuenta=fila["numero_cuenta"].strip(),
                         defaults={
                             "nombre_cuenta": fila["nombre_cuenta"].strip(),
                             "tipo_cuenta": fila["tipo_cuenta"].strip(),
-                            "rubro": fila["rubro"].strip(),
+                            "rubro": rubro,
                             "especificacion": fila["especificacion"].strip(),
                             "cuenta_activa": es_activa,
                         }

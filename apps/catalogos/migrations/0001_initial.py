@@ -13,19 +13,33 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
+            name='Rubro',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('rubro', models.CharField(max_length = 100)),
+                ('rubro_activo', models.BooleanField(default=True)),
+            ],
+            options={
+                'verbose_name': 'rubro',
+                'verbose_name_plural': 'rubros',
+                'ordering':['id'],
+            },
+        ),
+        migrations.CreateModel(
             name='Cuenta',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('numero_cuenta', models.CharField(max_length=20)),
                 ('nombre_cuenta', models.CharField(max_length=100)),
                 ('tipo_cuenta', models.CharField(choices=[('Activos', 'Activos'), ('Pasivos', 'Pasivos'), ('Capital', 'Capital'), ('Ingresos', 'Ingresos'), ('Gastos', 'Gastos'), ('Costos', 'Costos'), ('No_definido', 'No_definido')], default='No_definido', max_length=50)),
-                ('rubro', models.CharField(max_length=100)),
+                ('rubro', models.ForeignKey(to='catalogos.rubro',on_delete=models.PROTECT,)),
                 ('especificacion', models.CharField(blank=True, max_length=100)),
                 ('cuenta_activa', models.BooleanField(default=True)),
             ],
             options={
                 'verbose_name': 'cuenta',
                 'verbose_name_plural': 'cuentas',
+                'ordering':['numero_cuenta'],
                 'constraints': [models.UniqueConstraint(models.F('numero_cuenta'), name='numero_cuenta_unico', violation_error_message='Ya existe una cuenta registrada con dicho número'), models.CheckConstraint(condition=models.Q(('tipo_cuenta__in', ['Activos', 'Pasivos', 'Capital', 'Ingresos', 'Gastos', 'Costos', 'No_definido'])), name='tipo_cuenta_valido')],
             },
         ),
