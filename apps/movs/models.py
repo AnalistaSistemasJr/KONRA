@@ -13,7 +13,7 @@ class Registro_Movimientos(models.Model):
     estacion = models.ForeignKey(Estacion, on_delete=models.PROTECT, related_name="movimientos")
     cuenta = models.ForeignKey(Cuenta, on_delete=models.PROTECT, related_name="movimientos")
     tipo_movimiento = models.CharField(max_length = 1, choices=Tipo_movimiento.choices)
-    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
     descripcion = models.CharField(max_length=100)
     creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, editable=False, on_delete = models.PROTECT)
     creado_en = models.DateTimeField(auto_now_add=True, editable=False)

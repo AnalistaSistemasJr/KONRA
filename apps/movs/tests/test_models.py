@@ -16,7 +16,6 @@ from apps.catalogos.models import Estacion, Cuenta, TipoCuenta
 class ModeloRegistroTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command("makemigrations", "--check", "--dry-run", verbosity=0)
         call_command("setup_roles", stdout=StringIO())
         cls.usuario = get_user_model().objects.create_user(
             username="user1", 

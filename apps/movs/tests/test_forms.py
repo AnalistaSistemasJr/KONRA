@@ -182,7 +182,7 @@ class RegistrarFormTest(TestCase):
     def test_validacion_restriccion_monto_limite(self):
         registros_iniciales = Registro_Movimientos.objects.count()
         self.client.force_login(self.usuario_con_permisos)
-        for monto in ["2000000.00","-3000000.00"]:
+        for monto in ["1000000.01","-1000000.01"]:
             response = self.client.post(
                 reverse("movs:registro"),
                 {
@@ -191,7 +191,7 @@ class RegistrarFormTest(TestCase):
                     "cuenta": self.cuenta.pk,
                     "tipo_movimiento": Tipo_movimiento.ENTRADA,
                     "monto": monto,
-                    "descripcion": "prueba registro con post usuario con permisos",
+                    "descripcion": "prueba monto con limite superado",
                 }
             )
             self.assertEqual(response.status_code, 200)
@@ -200,7 +200,7 @@ class RegistrarFormTest(TestCase):
     def test_validacion_restriccion_monto_aceptado(self):
         registros_iniciales = Registro_Movimientos.objects.count()
         self.client.force_login(self.usuario_con_permisos)
-        for monto in ["200000.00","-300000.00"]:
+        for monto in ["100000.00","-100000.00"]:
             response = self.client.post(
                 reverse("movs:registro"),
                 {
@@ -209,7 +209,7 @@ class RegistrarFormTest(TestCase):
                     "cuenta": self.cuenta.pk,
                     "tipo_movimiento": Tipo_movimiento.ENTRADA,
                     "monto": monto,
-                    "descripcion": "prueba registro con post usuario con permisos",
+                    "descripcion": "prueba registro con monto limite aceptado",
                 }
             )
             self.assertEqual(response.status_code, 302)
