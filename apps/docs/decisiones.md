@@ -3,8 +3,8 @@
 Escribir sobre:
 
 ## BASE DE DATOS
-Se elige realizar el desarrollo en posstgresql debido a las ventajas que este tiene sobre sqlite. El manejo de decimales, ASCII y seguridad.
-Para comprobar la conexión, en terminar, correr lo siguiente:
+Se elige realizar el desarrollo en postgresql debido a las ventajas que este tiene sobre sqlite. El manejo de decimales, ASCII y seguridad.
+Para comprobar la conexión, en terminal, correr lo siguiente:
 python manage.py shell -c "from django.db import connection; print(connection.vendor)"    
 git ls-files | findstr sqlite 
 

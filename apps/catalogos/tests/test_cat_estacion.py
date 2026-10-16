@@ -31,6 +31,9 @@ class ModeloCatalogoTest(TestCase):
         )    
         cls.usuario_soporte.groups.add(Group.objects.get(name = "Soporte"))
 
+    def test_no_hay_migraciones_pendientes(self):
+        call_command("makemigrations", "--check", "--dry-run", verbosity=0)
+
     def datos(self, **cambios):
         base = dict(
             numero_estacion = 1,
