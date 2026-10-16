@@ -3,7 +3,7 @@ from django.core.management import call_command, CommandError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db import IntegrityError, transaction
-from apps.catalogos.models import Estacion, Cuenta
+from apps.catalogos.models import Estacion, Cuenta, Rubro
 from io import StringIO
 from unittest.mock import patch
 from tempfile import NamedTemporaryFile
@@ -30,12 +30,14 @@ class ModeloCatalogoTest(TestCase):
         )    
         cls.usuario_soporte.groups.add(Group.objects.get(name = "Soporte"))
 
+        cls.rubro = Rubro.objects.create(rubro="Sueldos")
+
     def datos(self, **cambios):
         base = dict(
             numero_cuenta = "00-00-00-00-00",
             nombre_cuenta = "Cuenta de capital",
             tipo_cuenta = "Capital",
-            rubro = "capital contable",
+            rubro = self.rubro,
             especificacion = "",
             cuenta_activa = True
         )
@@ -79,6 +81,9 @@ class ModeloCatalogoTest(TestCase):
         self.assertEqual(cuentas_iniciales,cuentas_finales)
 
 class ImportarCuentasCommandTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.rubro = Rubro.objects.create(rubro="Sueldos")
 
     def crear_csv(self, contenido):
         archivo = NamedTemporaryFile(
@@ -94,7 +99,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_simulacion_no_escribe_registros(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
+            "1000,Caja,Activos,Sueldos,EFECTIVO,true\n"
         )
 
         salida = StringIO()
@@ -111,8 +116,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_aplicar_crea_registros(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
-            "1001,Bancos,Activos,CIRCULANTE,BANCOS,true\n"
+            "1000,Caja,Activos,Sueldos,Saldos,true\n"
+            "1001,Bancos,Activos,Sueldos,Saldos,true\n"
         )
 
         call_command(
@@ -126,8 +131,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_mismo_archivo_dos_veces_no_duplica(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
-            "1001,Bancos,Activos,CIRCULANTE,BANCOS,true\n"
+            "1000,Caja,Activos,Sueldos,Sueldos,true\n"
+            "1001,Bancos,Activos,Sueldos,Sueldos,true\n"
         )
 
         call_command("import_cuentas", ruta, aplicar=True)
@@ -141,9 +146,9 @@ class ImportarCuentasCommandTest(TestCase):
     def test_rollback_si_hay_fila_invalida_al_final(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Circulante,Efectivo,true\n"
-            "1001,Bancos,Activos,Circulante,Bancos,true\n"
-            "1002,Cuenta inválida,TIPO_INEXISTENTE,Circulante,Prueba,true\n"
+            "1000,Caja,Activos,Sueldos,Efectivo,true\n"
+            "1001,Bancos,Activos,Sueldos,Bancos,true\n"
+            "1002,Cuenta inválida,TIPO_INEXISTENTE,Sueldos,Prueba,true\n"
         )
 
         with self.assertRaises(Exception):
@@ -158,8 +163,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_numero_cuenta_duplicado_en_csv(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
-            "1000,Bancos,Activos,CIRCULANTE,BANCOS,true\n"
+            "1000,Caja,Activos,Sueldos,EFECTIVO,true\n"
+            "1000,Bancos,Activos,Sueldos,BANCOS,true\n"
         )
 
         with self.assertRaisesMessage(
@@ -173,7 +178,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_espacios_sobrantes_se_eliminan(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            " 1000 , Caja General , Activos , CIRCULANTE , EFECTIVO , true\n"
+            " 1000 , Caja General , Activos , Sueldos , EFECTIVO , true\n"
         )
 
         call_command(
@@ -190,12 +195,12 @@ class ImportarCuentasCommandTest(TestCase):
     def test_espacios_no_generan_duplicados(self):
         ruta1 = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
+            "1000,Caja,Activos,Sueldos,EFECTIVO,true\n"
         )
 
         ruta2 = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            " 1000 ,Caja,Activos,CIRCULANTE,EFECTIVO,true\n"
+            " 1000 ,Caja,Activos,Sueldos,EFECTIVO,true\n"
         )
 
         call_command("import_cuentas", ruta1, aplicar=True)
@@ -260,7 +265,7 @@ class ImportarCuentasCommandTest(TestCase):
                 "numero_cuenta": "1000",
                 "nombre_cuenta": "Caja",
                 "tipo_cuenta": "Activos",
-                "rubro": "Circulante",
+                "rubro": "Sueldos",
                 "especificacion": "Efectivo",
                 "cuenta_activa": "true",
             },
@@ -268,7 +273,7 @@ class ImportarCuentasCommandTest(TestCase):
                 "numero_cuenta": "",
                 "nombre_cuenta": "Bancos",
                 "tipo_cuenta": "Activos",
-                "rubro": "Circulante",
+                "rubro": "Sueldos",
                 "especificacion": "Bancos",
                 "cuenta_activa": "true",
             },
@@ -282,7 +287,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_error_escritura_hace_rollback(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Circulante,Efectivo,true\n"
+            "1000,Caja,Activos,Sueldos,Efectivo,true\n"
         )
 
         with patch(
@@ -307,8 +312,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_rollback_si_falla_segunda_fila(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Circulante,Efectivo,true\n"
-            "2000,Caja 2,Pasivos,Efectivo,Efectivo,true\n"
+            "1000,Caja,Activos,Sueldos,Efectivo,true\n"
+            "2000,Caja 2,Pasivos,Sueldos,Efectivo,true\n"
         )
 
         llamadas = 0
@@ -325,7 +330,7 @@ class ImportarCuentasCommandTest(TestCase):
                     numero_cuenta="1000",
                     nombre_cuenta="Caja 2",
                     tipo_cuenta="Pasivos",
-                    rubro="Circulante",
+                    rubro="Sueldos",
                     especificacion="",
                     cuenta_activa=True
                 ),

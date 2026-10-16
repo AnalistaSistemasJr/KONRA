@@ -8,7 +8,7 @@ from django.contrib.auth.models import Group
 from django.core.management import call_command
 from io import StringIO
 from apps.movs.models import Registro_Movimientos, Tipo_movimiento
-from apps.catalogos.models import Cuenta, Estacion, TipoCuenta
+from apps.catalogos.models import Cuenta, Estacion, TipoCuenta, Rubro
 
 class UserTestAuth(TestCase):
     @classmethod
@@ -91,10 +91,13 @@ class RegistroMovimientosViewTest(TestCase):
             estacion_activa = True
         )
 
+        cls.rubro = Rubro.objects.create(rubro="Sueldos")
+
         cls.cuenta = Cuenta.objects.create(
             numero_cuenta = "10-00-00-00-00",
             nombre_cuenta = "Cuenta testeo",
             tipo_cuenta = "Activos",
+            rubro = cls.rubro,
             cuenta_activa = True
         )
     

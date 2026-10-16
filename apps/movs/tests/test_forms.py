@@ -6,7 +6,7 @@ from django.contrib.auth.models import Group
 from datetime import date, timedelta
 from io import StringIO
 from apps.movs.models import Registro_Movimientos, Tipo_movimiento
-from apps.catalogos.models import Estacion, Cuenta, TipoCuenta
+from apps.catalogos.models import Estacion, Cuenta, TipoCuenta, Rubro
 
 class RegistrarFormTest(TestCase):
     @classmethod
@@ -33,13 +33,17 @@ class RegistrarFormTest(TestCase):
             estacion_activa=True
         )
 
+        cls.rubro = Rubro.objects.create(rubro="Sueldos")
+
         cls.cuenta = Cuenta.objects.create(
             numero_cuenta = "40-00-00-00-00",
             nombre_cuenta = "Ingresos",
             tipo_cuenta = "Activos",
+            rubro = cls.rubro,
             cuenta_activa = True
         )
 
+        
     def test_anonimo_get_post_capturar(self):
         registros_iniciales = Registro_Movimientos.objects.count()
 

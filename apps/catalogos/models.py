@@ -58,7 +58,6 @@ class Cuenta(models.Model):
     numero_cuenta = models.CharField(max_length = 20)
     nombre_cuenta = models.CharField(max_length = 100)
     tipo_cuenta = models.CharField(max_length = 50, choices = TipoCuenta.choices, default=TipoCuenta.DEFAULT)
-    #rubro = models.CharField(max_length = 100)
     rubro = models.ForeignKey(Rubro, on_delete = models.PROTECT)
     especificacion = models.CharField(max_length = 100, blank = True)
     cuenta_activa = models.BooleanField(default = True)
