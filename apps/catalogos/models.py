@@ -3,7 +3,6 @@ from django.db.models.functions import Upper
 from django.contrib.auth.decorators import login_required, permission_required
 
 class Rubro(models.Model):
-
     rubro = models.CharField(max_length = 100)
     rubro_activo = models.BooleanField(default=True)
 
