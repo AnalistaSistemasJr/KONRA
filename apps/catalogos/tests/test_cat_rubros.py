@@ -185,3 +185,11 @@ class ModeloCatalogoTest(TestCase):
                 )
 
         self.assertEqual(Estacion.objects.count(), 0)
+
+    def test_str_retorna_nombre_rubro(self):
+        rubro = Rubro.objects.create(
+            rubro="Sueldos",
+            rubro_activo=True,
+        )
+
+        self.assertEqual(str(rubro), "Sueldos")

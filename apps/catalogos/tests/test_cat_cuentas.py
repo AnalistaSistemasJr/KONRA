@@ -330,8 +330,8 @@ class ImportarCuentasCommandTest(TestCase):
                 Cuenta.objects.create(
                     numero_cuenta="1000",
                     nombre_cuenta="Caja 2",
-                    tipo_cuenta="Pasivos2",
-                    rubro="Sueldos",
+                    tipo_cuenta="Pasivos",
+                    rubro=self.rubro,
                     especificacion="Efectivo",
                     cuenta_activa=True
                 ),
