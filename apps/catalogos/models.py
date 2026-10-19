@@ -13,8 +13,9 @@ class Rubro(models.Model):
     rubro = models.CharField(max_length = 100)
     rubro_activo = models.BooleanField(default=True)
 
-    def clean(self):
+    def save(self, *args, **kwargs):
         self.rubro = quitar_acentos(self.rubro).strip()
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "rubro"

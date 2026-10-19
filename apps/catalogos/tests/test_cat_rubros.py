@@ -5,15 +5,29 @@ from django.contrib.auth.models import Group
 from apps.catalogos.models import Cuenta, Estacion, Rubro
 from unittest.mock import patch
 from io import StringIO
+from django.db import IntegrityError, transaction
 from tempfile import NamedTemporaryFile
 from apps.catalogos.management.commands.import_rubros import Command
 
-
-class ModeloCatalogoTest(TestCase):
+class ModeloCataloTest(TestCase):
     @classmethod
-    def setUpClass(cls):
-        return super().setUpClass()
+    def setUpTestData(cls):
+        cls.rubro = Rubro.objects.create(
+            rubro = "rubro_1",
+            rubro_activo = True
+        )
 
+    def test_normalizacion_rubro(self):
+        registros_iniciales = Rubro.objects.count()
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Rubro.objects.create(
+                    rubro = "rúBRó_1",
+                    rubro_activo = True
+                )
+        self.assertEqual(Rubro.objects.count(), registros_iniciales)
+
+class CommandCatalogoTest(TestCase):
     def crear_csv(self, contenido):
         archivo = NamedTemporaryFile(
             mode = "w",
