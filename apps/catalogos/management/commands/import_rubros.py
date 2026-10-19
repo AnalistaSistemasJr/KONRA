@@ -39,7 +39,7 @@ class Command(BaseCommand):
 
         codigos_vistos = set()
         for num_fila, fila in enumerate(filas, start=2):
-            rubro = fila.get("rubro", "").strip()
+            rubro = fila.get("rubro", "").strip().lower()
             activo = fila.get("rubro_activo", "").strip()
 
             if not rubro:
@@ -73,9 +73,9 @@ class Command(BaseCommand):
                 for fila in filas_ordenadas:
                     es_activo = fila["rubro_activo"].strip().lower() in ["true", "1", "si", "sí", "yes"]
                     rubro, creado = Rubro.objects.update_or_create(
-                        rubro=fila["rubro"].strip(),
+                        rubro=fila["rubro"].strip().lower(),
                         defaults={
-                            "rubro": fila["rubro"].strip(),
+                            "rubro": fila["rubro"].strip().lower(),
                             "rubro_activo": es_activo,
                         }
                     )

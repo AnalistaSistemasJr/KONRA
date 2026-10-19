@@ -314,6 +314,7 @@ class ImportarCuentasCommandTest(TestCase):
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
             "1000,Caja,Activos,Sueldos,Efectivo,true\n"
             "2000,Caja 2,Pasivos,Sueldos,Efectivo,true\n"
+            "2001,Caja 3,Pasivos,Sueldos,Efectivo,true"
         )
 
         llamadas = 0
@@ -329,9 +330,9 @@ class ImportarCuentasCommandTest(TestCase):
                 Cuenta.objects.create(
                     numero_cuenta="1000",
                     nombre_cuenta="Caja 2",
-                    tipo_cuenta="Pasivos",
+                    tipo_cuenta="Pasivos2",
                     rubro="Sueldos",
-                    especificacion="",
+                    especificacion="Efectivo",
                     cuenta_activa=True
                 ),
                 True,

@@ -13,5 +13,8 @@ ROLES = {
         "catalogos.view_cuenta",
         "catalogos.add_cuenta",
         "catalogos.change_cuenta",
+        "catalogos.view_rubro",
+        "catalogos.add_rubro",
+        "catalogos.change_rubro",
     ],
 }
