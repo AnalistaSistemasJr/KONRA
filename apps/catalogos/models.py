@@ -1,14 +1,32 @@
 from django.db import models
-from django.db.models.functions import Upper
+from django.db.models.functions import Upper, Lower
 from django.contrib.auth.decorators import login_required, permission_required
+import unicodedata
+
+def quitar_acentos(texto):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto)
+        if unicodedata.category(c) != 'Mn'
+    )
 
 class Rubro(models.Model):
     rubro = models.CharField(max_length = 100)
     rubro_activo = models.BooleanField(default=True)
 
+    def clean(self):
+        self.rubro = quitar_acentos(self.rubro).strip()
+
     class Meta:
         verbose_name = "rubro"
         verbose_name_plural = "rubros"
+
+        constraints = [
+            models.UniqueConstraint(
+                Lower('rubro'),
+                name = "rubro_unico",
+                violation_error_message = "Ya existe un rubro registrado con ese nombre"          
+            )
+        ]
 
     def __str__(self):
         return self.rubro

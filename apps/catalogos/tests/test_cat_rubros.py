@@ -139,7 +139,7 @@ class ModeloCatalogoTest(TestCase):
         ruta = self.crear_csv(
             "rubro,rubro_activo\n"
             "rubro_1,true\n"
-            "rubro_1,true"
+            "rubró_1,true"
         )
 
         with self.assertRaisesMessage(CommandError, "duplicado en el CSV"):

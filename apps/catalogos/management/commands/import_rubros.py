@@ -2,7 +2,13 @@ import csv
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from apps.catalogos.models import Rubro
+import unicodedata
 
+def quitar_acentos(texto):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto)
+        if unicodedata.category(c) != 'Mn'
+    )
 
 class Command(BaseCommand):
     help = "Importa el catálogo de rubros desde un CSV (por defecto solo simula)."
@@ -40,6 +46,7 @@ class Command(BaseCommand):
         codigos_vistos = set()
         for num_fila, fila in enumerate(filas, start=2):
             rubro = fila.get("rubro", "").strip().lower()
+            rubro = quitar_acentos(rubro)
             activo = fila.get("rubro_activo", "").strip()
 
             if not rubro:
