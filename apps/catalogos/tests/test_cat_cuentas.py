@@ -90,7 +90,7 @@ class ImportarCuentasCommandTest(TestCase):
             mode="w",
             suffix=".csv",
             delete=False,
-            encoding="utf-8"
+            encoding="utf-8-sig"
         )
         archivo.write(contenido)
         archivo.close()
