@@ -1,20 +1,39 @@
 from django.db import models
 from django.db.models.functions import Upper, Lower
+from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required, permission_required
+from apps.catalogos.normalize import normalizar_texto
+from apps.catalogos.validation import NUMERO_CUENTA_PATRON, es_numero_cuenta_valido
 import unicodedata
-
-def quitar_acentos(texto):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', texto)
-        if unicodedata.category(c) != 'Mn'
-    )
+import re
 
 class Rubro(models.Model):
     rubro = models.CharField(max_length = 100)
+    clave = models.CharField(max_length = 100, editable = False, unique = True)
     rubro_activo = models.BooleanField(default=True)
 
+    def clean(self):
+        super().clean()
+        clave = normalizar_texto(self.rubro)
+
+        if not clave:
+            raise ValidationError({"rubro": "El rubro no puede quedar vacío"})
+        
+        if Rubro.objects.filter(clave=clave).exclude(pk=self.pk).exists():
+            raise ValidationError({"rubro": "Ya existe un rubro registrado con ese nombre"})
+
     def save(self, *args, **kwargs):
-        self.rubro = quitar_acentos(self.rubro).strip()
+        self.rubro = " ".join(self.rubro.split())
+        self.clave = normalizar_texto(self.rubro)
+
+        if not self.clave:
+            raise ValidationError({"rubro": "El rubro no puede quedar vacío"})
+
+        update_fields = kwargs.get("update_fields")
+
+        if update_fields and "rubro" in update_fields:
+            kwargs["update_fields"] = list(set(update_fields) | {"clave"})
+
         super().save(*args, **kwargs)
 
     class Meta:
@@ -22,12 +41,10 @@ class Rubro(models.Model):
         verbose_name_plural = "rubros"
 
         constraints = [
-            models.UniqueConstraint(
-                Lower('rubro'),
-                name = "rubro_unico",
-                violation_error_message = "Ya existe un rubro registrado con ese nombre"          
-            )
-        ]
+            models.CheckConstraint(
+                condition=~models.Q(clave=""), 
+                name="rubro_clave_no_vacia", violation_error_message="El rubro no puede ser vacío")]
+
 
     def __str__(self):
         return self.rubro
@@ -80,6 +97,19 @@ class Cuenta(models.Model):
     especificacion = models.CharField(max_length = 100, blank = True)
     cuenta_activa = models.BooleanField(default = True)
 
+    def clean(self):
+        super().clean()
+
+        if not es_numero_cuenta_valido(self.numero_cuenta):
+            raise ValidationError(
+            {
+                "numero_cuenta": (
+                    "El número de cuenta debe tener el formato "
+                    "NN-NN-NN-NN-NN"
+                )
+            }
+        )
+
     class Meta:
         verbose_name = "cuenta"
         verbose_name_plural = "cuentas"
@@ -95,9 +125,13 @@ class Cuenta(models.Model):
                     tipo_cuenta__in=TipoCuenta.values
                 ),
                 name="tipo_cuenta_valido",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(numero_cuenta__regex=rf"^{NUMERO_CUENTA_PATRON}$" ),
+                name="numero_cuenta_formato",
+                violation_error_message="La cuenta debe cumplir el formato nn-nn-nn-nn-nn (n = número)"
             )
-        ]
+            ]
 
     def __str__(self):
         return f"{self.numero_cuenta} - {self.nombre_cuenta}"
-
