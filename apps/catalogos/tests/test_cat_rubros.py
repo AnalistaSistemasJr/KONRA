@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 from django.core.management import call_command, CommandError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -17,15 +18,65 @@ class ModeloCataloTest(TestCase):
             rubro_activo = True
         )
 
-    def test_normalizacion_rubro(self):
-        registros_iniciales = Rubro.objects.count()
+    def test_no_permite_mismo_rubro_por_mayusculas(self):
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 Rubro.objects.create(
-                    rubro = "rúBRó_1",
-                    rubro_activo = True
+                    rubro="RUBRO_1",
+                    rubro_activo=True,
                 )
-        self.assertEqual(Rubro.objects.count(), registros_iniciales)
+
+    def test_no_permite_mismo_rubro_por_acentos(self):
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Rubro.objects.create(
+                    rubro="rúbro_1",
+                    rubro_activo=True,
+                )
+
+    def test_genera_clave(self):
+        rubro = Rubro.objects.create(
+            rubro=" NÓMINA "
+        )
+
+        self.assertEqual(
+            rubro.clave,
+            "nomina",
+        )
+
+    def test_conserva_enie_en_clave(self):
+        rubro = Rubro.objects.create(
+            rubro="Peña"
+        )
+
+        self.assertEqual(
+            rubro.clave,
+            "peña",
+        )
+
+    def test_colapsa_espacios(self):
+        rubro = Rubro.objects.create(
+            rubro="Gasto     Operativo"
+        )
+
+        self.assertEqual(
+            rubro.rubro,
+            "Gasto Operativo",
+        )
+
+    def test_clean_detecta_duplicado_por_clave(self):
+        Rubro.objects.create(rubro="rubro prueba")
+        rubro_duplicado = Rubro(rubro="RUBRO PRUEBA")
+
+        with self.assertRaises(ValidationError) as context:
+            rubro_duplicado.clean()
+
+        self.assertIn("rubro", context.exception.message_dict)
+        self.assertEqual(
+            context.exception.message_dict["rubro"], 
+            ["Ya existe un rubro registrado con ese nombre"]
+        )
+
 
 class CommandCatalogoTest(TestCase):
     def crear_csv(self, contenido):
@@ -153,7 +204,7 @@ class CommandCatalogoTest(TestCase):
         ruta = self.crear_csv(
             "rubro,rubro_activo\n"
             "rubro_1,true\n"
-            "rubró_1,true"
+            "Rubró_1,true"
         )
 
         with self.assertRaisesMessage(CommandError, "duplicado en el CSV"):
@@ -198,7 +249,7 @@ class CommandCatalogoTest(TestCase):
                     aplicar=True,
                 )
 
-        self.assertEqual(Estacion.objects.count(), 0)
+        self.assertEqual(Rubro.objects.count(), 0)
 
     def test_str_retorna_nombre_rubro(self):
         rubro = Rubro.objects.create(
@@ -207,3 +258,45 @@ class CommandCatalogoTest(TestCase):
         )
 
         self.assertEqual(str(rubro), "Sueldos")
+
+    def test_importa_nomina_con_variantes(self):
+        ruta = self.crear_csv(
+            "rubro,rubro_activo\n"
+            "Nómina,true\n"
+        )
+
+        call_command("import_rubros", ruta, aplicar=True)
+
+        ruta2 = self.crear_csv(
+            "rubro,rubro_activo\n"
+            "NÓMINA,true\n"
+        )
+
+        call_command("import_rubros", ruta2, aplicar=True)
+        self.assertEqual(Rubro.objects.count(), 1)
+
+    def test_rubro_solo_espacios_full_clean(self):
+        rubro = Rubro(
+            rubro="     "
+        )
+
+        with self.assertRaises(ValidationError) as exc:
+            rubro.full_clean()
+
+        self.assertIn(
+            "El rubro no puede quedar vacío",
+            str(exc.exception)
+        )
+
+    def test_rubro_solo_espacios_no_valido(self):
+        rubro = Rubro(
+            rubro="     "
+        )
+
+        with self.assertRaises(ValidationError) as exc:
+            rubro.save()
+
+        self.assertIn(
+            "El rubro no puede quedar vacío",
+            str(exc.exception)
+        )
