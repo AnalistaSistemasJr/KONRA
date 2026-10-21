@@ -3,6 +3,7 @@ from django.core.management import call_command, CommandError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db import IntegrityError, transaction
+from django.core.exceptions import ValidationError
 from apps.catalogos.models import Estacion, Cuenta, Rubro
 from io import StringIO
 from unittest.mock import patch
@@ -34,7 +35,7 @@ class ModeloCatalogoTest(TestCase):
 
     def datos(self, **cambios):
         base = dict(
-            numero_cuenta = "00-00-00-00-00",
+            numero_cuenta = "99-99-99-99-99",
             nombre_cuenta = "Cuenta de capital",
             tipo_cuenta = "Capital",
             rubro = self.rubro,
@@ -47,7 +48,7 @@ class ModeloCatalogoTest(TestCase):
     def test_cuenta_duplicada(self):
         Cuenta.objects.create(**self.datos())
         with self.assertRaises(IntegrityError), transaction.atomic():
-            Cuenta.objects.create(**self.datos(numero_cuenta = "00-00-00-00-00", nombre_cuenta = "Cuenta de activo"))
+            Cuenta.objects.create(**self.datos(numero_cuenta = "99-99-99-99-99", nombre_cuenta = "Cuenta de activo"))
 
         self.assertEqual(Cuenta.objects.count(), 1)
 
@@ -80,6 +81,15 @@ class ModeloCatalogoTest(TestCase):
         cuentas_finales = Cuenta.objects.count()
         self.assertEqual(cuentas_iniciales,cuentas_finales)
 
+    def test_numero_cuenta_invalido(self):
+        cuenta = Cuenta(**self.datos(
+            numero_cuenta="cuenta 01", 
+            nombre_cuenta="Cuenta de activo"
+        ))
+        with self.assertRaises(ValidationError):
+            cuenta.full_clean()
+     
+
 class ImportarCuentasCommandTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -99,7 +109,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_simulacion_no_escribe_registros(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Sueldos,EFECTIVO,true\n"
+            "10-00-00-00-00,Caja,Activos,Sueldos,EFECTIVO,true\n"
         )
 
         salida = StringIO()
@@ -116,8 +126,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_aplicar_crea_registros(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Sueldos,Saldos,true\n"
-            "1001,Bancos,Activos,Sueldos,Saldos,true\n"
+            "10-00-00-00-00,Caja,Activos,Sueldos,Saldos,true\n"
+            "20-00-00-00-00,Bancos,Activos,Sueldos,Saldos,true\n"
         )
 
         call_command(
@@ -131,8 +141,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_mismo_archivo_dos_veces_no_duplica(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Sueldos,Sueldos,true\n"
-            "1001,Bancos,Activos,Sueldos,Sueldos,true\n"
+            "10-00-00-00-00,Caja,Activos,Sueldos,Sueldos,true\n"
+            "20-00-00-00-00,Bancos,Activos,Sueldos,Sueldos,true\n"
         )
 
         call_command("import_cuentas", ruta, aplicar=True)
@@ -146,9 +156,9 @@ class ImportarCuentasCommandTest(TestCase):
     def test_rollback_si_hay_fila_invalida_al_final(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Sueldos,Efectivo,true\n"
-            "1001,Bancos,Activos,Sueldos,Bancos,true\n"
-            "1002,Cuenta inválida,TIPO_INEXISTENTE,Sueldos,Prueba,true\n"
+            "10-00-00-00-00,Caja,Activos,Sueldos,Efectivo,true\n"
+            "20-00-00-00-00,Bancos,Activos,Sueldos,Bancos,true\n"
+            "30-00-00-00-00,Cuenta inválida,TIPO_INEXISTENTE,Sueldos,Prueba,true\n"
         )
 
         with self.assertRaises(Exception):
@@ -163,8 +173,8 @@ class ImportarCuentasCommandTest(TestCase):
     def test_numero_cuenta_duplicado_en_csv(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Sueldos,EFECTIVO,true\n"
-            "1000,Bancos,Activos,Sueldos,BANCOS,true\n"
+            "00-00-00-00-00,Caja,Activos,Sueldos,EFECTIVO,true\n"
+            "00-00-00-00-00,Bancos,Activos,Sueldos,BANCOS,true\n"
         )
 
         with self.assertRaisesMessage(
@@ -178,7 +188,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_espacios_sobrantes_se_eliminan(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            " 1000 , Caja General , Activos , Sueldos , EFECTIVO , true\n"
+            " 10-00-00-00-00 , Caja General , Activos , Sueldos , EFECTIVO , true\n"
         )
 
         call_command(
@@ -189,18 +199,18 @@ class ImportarCuentasCommandTest(TestCase):
 
         cuenta = Cuenta.objects.get()
 
-        self.assertEqual(cuenta.numero_cuenta, "1000")
+        self.assertEqual(cuenta.numero_cuenta, "10-00-00-00-00")
         self.assertEqual(cuenta.nombre_cuenta, "Caja General")
 
     def test_espacios_no_generan_duplicados(self):
         ruta1 = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Sueldos,EFECTIVO,true\n"
+            "10-00-00-00-00,Caja,Activos,Sueldos,EFECTIVO,true\n"
         )
 
         ruta2 = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            " 1000 ,Caja,Activos,Sueldos,EFECTIVO,true\n"
+            " 10-00-00-00-00 ,Caja,Activos,Sueldos,EFECTIVO,true\n"
         )
 
         call_command("import_cuentas", ruta1, aplicar=True)
@@ -221,7 +231,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_encabezados_faltantes(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta\n"
-            "1000,Caja\n"
+            "10-00-00-00-00,Caja\n"
         )
 
         with self.assertRaisesMessage(
@@ -262,7 +272,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_fila_invalida_lanza_commanderror(self):
         filas = [
             {
-                "numero_cuenta": "1000",
+                "numero_cuenta": "10-00-00-00-00",
                 "nombre_cuenta": "Caja",
                 "tipo_cuenta": "Activos",
                 "rubro": "Sueldos",
@@ -287,7 +297,7 @@ class ImportarCuentasCommandTest(TestCase):
     def test_error_escritura_hace_rollback(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Sueldos,Efectivo,true\n"
+            "10-00-00-00-00,Caja,Activos,Sueldos,Efectivo,true\n"
         )
 
         with patch(
@@ -312,9 +322,9 @@ class ImportarCuentasCommandTest(TestCase):
     def test_rollback_si_falla_segunda_fila(self):
         ruta = self.crear_csv(
             "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
-            "1000,Caja,Activos,Sueldos,Efectivo,true\n"
-            "2000,Caja 2,Pasivos,Sueldos,Efectivo,true\n"
-            "2001,Caja 3,Pasivos,Sueldos,Efectivo,true"
+            "10-00-00-00-00,Caja,Activos,Sueldos,Efectivo,true\n"
+            "20-00-00-00-00,Caja 2,Pasivos,Sueldos,Efectivo,true\n"
+            "30-00-00-00-00,Caja 3,Pasivos,Sueldos,Efectivo,true"
         )
 
         llamadas = 0
@@ -328,7 +338,7 @@ class ImportarCuentasCommandTest(TestCase):
 
             return (
                 Cuenta.objects.create(
-                    numero_cuenta="1000",
+                    numero_cuenta="10-00-00-00-00",
                     nombre_cuenta="Caja 2",
                     tipo_cuenta="Pasivos",
                     rubro=self.rubro,
@@ -349,4 +359,185 @@ class ImportarCuentasCommandTest(TestCase):
                     aplicar=True,
                 )
 
+        self.assertEqual(Cuenta.objects.count(), 0)
+
+    def test_rubro_inexistente_en_simulacion(self):
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "10-00-00-00-00,Caja,ACTIVO,Rubro Inexistente,General,true\n"
+        )
+
+        with self.assertRaisesMessage(
+            CommandError,
+            "no existe"
+        ):
+            call_command(
+                "import_cuentas",
+                ruta,
+            )
+
+    def test_rubro_inexistente_con_aplicar(self):
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "10-00-00-00-00,Caja,ACTIVO,Rubro Inexistente,General,true\n"
+        )
+
+        with self.assertRaisesMessage(
+            CommandError,
+            "no existe"
+        ):
+            call_command(
+                "import_cuentas",
+                ruta,
+                aplicar=True,
+            )
+
+    def test_rubro_desactivado(self):
+        Rubro.objects.create(
+            rubro="Nómina",
+            rubro_activo=False,
+        )
+
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "10-00-00-00-00,Caja,ACTIVO,Nómina,General,true\n"
+        )
+
+        with self.assertRaisesMessage(
+            CommandError,
+            "está desactivado"
+        ):
+            call_command(
+                "import_cuentas",
+                ruta,
+            )
+
+    def test_resuelve_rubro_normalizado(self):
+        Rubro.objects.create(
+            rubro="Nómina",
+            rubro_activo=True,
+        )
+
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "10-00-00-00-00,Caja,Activos,   NÓMINA   ,General,true\n"
+        )
+
+        call_command(
+            "import_cuentas",
+            ruta,
+            aplicar=True,
+        )
+        self.assertEqual(Cuenta.objects.count(),1)
+
+    def test_cuenta_conserva_su_rubro_aun_si_se_reordena(self):
+        rubro_a = Rubro.objects.create(
+            rubro="Nómina",
+            rubro_activo=True,
+        )
+
+        rubro_b = Rubro.objects.create(
+            rubro="Viáticos",
+            rubro_activo=True,
+        )
+
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "10-00-00-00-00,Cuenta A,Activos,Nómina,General,true\n"
+            "20-00-00-00-00,Cuenta B,Activos,Viáticos,General,true\n"
+        )
+
+        call_command(
+            "import_cuentas",
+            ruta,
+            aplicar=True,
+        )
+
+        self.assertEqual(
+            Cuenta.objects.get(numero_cuenta="10-00-00-00-00").rubro,
+            rubro_a,
+        )
+
+        self.assertEqual(
+            Cuenta.objects.get(numero_cuenta="20-00-00-00-00").rubro,
+            rubro_b,
+        )
+
+    def test_numero_cuenta_valido(self):
+        cuenta = Cuenta(
+            numero_cuenta="01-01-01-01-01",
+            nombre_cuenta="Caja",
+            rubro=self.rubro,
+        )
+
+        cuenta.full_clean()
+
+    def test_numero_cuenta_invalido_en_csv(self):
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "1000,Caja,Activos,Nomina,General,true\n"
+        )
+
+        with self.assertRaises(CommandError) as exc:
+            call_command(
+                "import_cuentas",
+                ruta,
+                aplicar=True,
+            )
+
+        self.assertIn(
+            "Número de cuenta inválido",
+            str(exc.exception),
+        )
+
+        self.assertEqual(
+            Cuenta.objects.count(),
+            0,
+        )
+
+    def test_cada_cuenta_conserva_el_rubro_de_su_fila(self):
+        rubro_a = Rubro.objects.create(rubro="Nómina")
+        rubro_b = Rubro.objects.create(rubro="Viáticos")
+        rubro_c = Rubro.objects.create(rubro="Servicios")
+
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "09-01-01-01-01,Cuenta A,Activos,Nómina,General,true\n"
+            "01-01-01-01-01,Cuenta B,Activos,Viáticos,General,true\n"
+            "05-01-01-01-01,Cuenta C,Activos,Servicios,General,true\n"
+        )
+        call_command("import_cuentas", ruta, aplicar=True)
+
+        self.assertEqual(Cuenta.objects.get(numero_cuenta="09-01-01-01-01").rubro, rubro_a)
+        self.assertEqual(Cuenta.objects.get(numero_cuenta="01-01-01-01-01").rubro, rubro_b)
+        self.assertEqual(Cuenta.objects.get(numero_cuenta="05-01-01-01-01").rubro, rubro_c)
+
+    def test_fila_buena_y_fila_con_rubro_inexistente_no_escribe_nada(self):
+        Rubro.objects.create(rubro="Nómina")
+        rubros_antes = Rubro.objects.count()
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "01-01-01-01-01,Caja,Activos,Nómina,General,true\n"
+            "01-01-01-01-02,Banco,Activos,Inexistente,General,true\n"
+        )
+        for aplicar in (False, True):
+            with self.subTest(aplicar=aplicar):
+                with self.assertRaises(CommandError) as exc:
+                    call_command("import_cuentas", ruta, aplicar=aplicar)
+                self.assertIn("Fila 3", str(exc.exception))
+                self.assertIn("Inexistente", str(exc.exception))
+                self.assertEqual(Cuenta.objects.count(), 0)
+                self.assertEqual(Rubro.objects.count(), rubros_antes)
+
+    def test_numero_cuenta_invalido_tambien_falla_en_simulacion(self):
+        Rubro.objects.create(rubro="Nómina")
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "01-01-01-01-01,Caja,Activos,Nómina,General,true\n"
+            "1000,Banco,Activos,Nómina,General,true\n"
+        )
+        with self.assertRaises(CommandError) as exc:
+            call_command("import_cuentas", ruta)
+        self.assertIn("Fila 3", str(exc.exception))
+        self.assertIn("Número de cuenta inválido", str(exc.exception))
         self.assertEqual(Cuenta.objects.count(), 0)

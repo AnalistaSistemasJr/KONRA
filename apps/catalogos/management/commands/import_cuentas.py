@@ -1,7 +1,9 @@
 import csv
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from apps.catalogos.normalize import normalizar_texto
 from apps.catalogos.models import Cuenta, Rubro
+from apps.catalogos.validation import es_numero_cuenta_valido
 
 
 class Command(BaseCommand):
@@ -42,28 +44,44 @@ class Command(BaseCommand):
             raise CommandError(f"El CSV no contiene las columnas obligatorias: {faltantes}")
 
         codigos_vistos = set()
+        resultado = []
         for num_fila, fila in enumerate(filas, start=2):
             numero = fila.get("numero_cuenta", "").strip()
             nombre = fila.get("nombre_cuenta", "").strip()
-            tipo = fila.get("tipo_cuenta", "").strip()
             rubro = fila.get("rubro", "").strip()
-            especificacion = fila.get("especificacion", "").strip()
-            activa = fila.get("cuenta_activa", "").strip().lower()
+            clave_rubro = normalizar_texto(rubro)
 
             if not numero or not nombre:
                 raise CommandError(f"Fila {num_fila}: 'numero_cuenta' y 'nombre_cuenta' son obligatorios.")
             
+            if not es_numero_cuenta_valido(numero):
+                raise CommandError(f"Fila {num_fila}: Número de cuenta inválido: '{numero}'")  
+            
             if numero in codigos_vistos:
                 raise CommandError(f"Fila {num_fila}: El número de cuenta '{numero}' está duplicado en el CSV.")
             
+                    
+            try:
+                rubro_obj = Rubro.objects.get(clave=clave_rubro)
+
+            except Rubro.DoesNotExist:
+                raise CommandError(f"Fila {num_fila}: El rubro '{rubro}' no existe.")
+
+            if not rubro_obj.rubro_activo:
+                raise CommandError(f"Fila {num_fila}: El rubro '{rubro}' está desactivado.")
+            
+            resultado.append((fila, rubro_obj))
             codigos_vistos.add(numero)
+
+        return resultado
+
 
     def handle(self, *args, **options):
         archivo = options["archivo"]
         aplicar = options["aplicar"]
 
         filas = self.leer(archivo)
-        self.validar(filas)
+        filas_validadas = self.validar(filas)
 
         if not aplicar:
             self.stdout.write(
@@ -75,13 +93,10 @@ class Command(BaseCommand):
 
         try:
             with transaction.atomic():
-                filas_ordenadas = sorted(filas, key=lambda x: len(x.get("numero_cuenta", "")))
                 
                 cuentas_creadas = 0
-                for fila in filas_ordenadas:
+                for fila, rubro in filas_validadas:
                     es_activa = fila["cuenta_activa"].strip().lower() in ["true", "1", "si", "sí", "yes"]
-                    rubro_nombre = fila["rubro"].strip()
-                    rubro = Rubro.objects.get(rubro=rubro_nombre)
                     cuenta, creado = Cuenta.objects.update_or_create(
                         numero_cuenta=fila["numero_cuenta"].strip(),
                         defaults={
@@ -97,7 +112,7 @@ class Command(BaseCommand):
 
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"¡Éxito! Se procesaron {len(filas_ordenadas)} cuentas ({cuentas_creadas} nuevas creadas)."
+                        f"¡Éxito! Se procesaron {len(filas)} cuentas ({cuentas_creadas} nuevas creadas)."
                     )
                 )
 
