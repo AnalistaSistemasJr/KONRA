@@ -3,12 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from apps.catalogos.models import Rubro
 import unicodedata
-
-def quitar_acentos(texto):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', texto)
-        if unicodedata.category(c) != 'Mn'
-    )
+from apps.catalogos.normalize import normalizar_texto
 
 class Command(BaseCommand):
     help = "Importa el catálogo de rubros desde un CSV (por defecto solo simula)."
@@ -45,17 +40,17 @@ class Command(BaseCommand):
 
         codigos_vistos = set()
         for num_fila, fila in enumerate(filas, start=2):
-            rubro = fila.get("rubro", "").strip().lower()
-            rubro = quitar_acentos(rubro)
+            rubro = fila.get("rubro", "")
+            clave = normalizar_texto(rubro)
             activo = fila.get("rubro_activo", "").strip()
 
-            if not rubro:
+            if not clave:
                 raise CommandError(f"Fila {num_fila}: 'rubro' es un campo obligatorio")
             
-            if rubro in codigos_vistos:
+            if clave in codigos_vistos:
                 raise CommandError(f"Fila {num_fila}: El rubro '{rubro}' está duplicado en el CSV.")
             
-            codigos_vistos.add(rubro)
+            codigos_vistos.add(clave)
 
     def handle(self, *args, **options):
         archivo = options["archivo"]
@@ -71,7 +66,6 @@ class Command(BaseCommand):
                 )
             )
             return
-
         try:
             with transaction.atomic():
                 filas_ordenadas = sorted(filas, key=lambda x: len(x.get("rubro", "")))
@@ -79,10 +73,12 @@ class Command(BaseCommand):
                 rubros_creados = 0
                 for fila in filas_ordenadas:
                     es_activo = fila["rubro_activo"].strip().lower() in ["true", "1", "si", "sí", "yes"]
+                    nombre_rubro = " ".join(fila["rubro"].split())
+                    clave = normalizar_texto(nombre_rubro)
                     rubro, creado = Rubro.objects.update_or_create(
-                        rubro=fila["rubro"].strip().lower(),
+                        clave = clave,
                         defaults={
-                            "rubro": fila["rubro"].strip().lower(),
+                            "rubro": nombre_rubro,
                             "rubro_activo": es_activo,
                         }
                     )
