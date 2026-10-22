@@ -300,3 +300,17 @@ class CommandCatalogoTest(TestCase):
             "El rubro no puede quedar vacío",
             str(exc.exception)
         )
+        
+    def test_rubro_vacio_en_csv_indica_fila(self):
+        Rubro.objects.create(rubro="Nómina")
+        ruta = self.crear_csv(
+            "numero_cuenta,nombre_cuenta,tipo_cuenta,rubro,especificacion,cuenta_activa\n"
+            "01-01-01-01-01,Caja,Activos,,General,true\n"
+        )
+        for aplicar in (False, True):
+            with self.subTest(aplicar=aplicar):
+                with self.assertRaises(CommandError) as exc:
+                    call_command("import_cuentas", ruta, aplicar=aplicar)
+                self.assertIn("Fila 2", str(exc.exception))
+                self.assertIn("no existe", str(exc.exception))
+                self.assertEqual(Cuenta.objects.count(), 0)
