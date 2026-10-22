@@ -58,9 +58,8 @@ class Command(BaseCommand):
                 raise CommandError(f"Fila {num_fila}: Número de cuenta inválido: '{numero}'")  
             
             if numero in codigos_vistos:
-                raise CommandError(f"Fila {num_fila}: El número de cuenta '{numero}' está duplicado en el CSV.")
-            
-                    
+                raise CommandError(f"Fila {num_fila}: El número de cuenta '{numero}' está duplicado en el CSV.")    
+                           
             try:
                 rubro_obj = Rubro.objects.get(clave=clave_rubro)
 
@@ -92,8 +91,7 @@ class Command(BaseCommand):
             return
 
         try:
-            with transaction.atomic():
-                
+            with transaction.atomic():            
                 cuentas_creadas = 0
                 for fila, rubro in filas_validadas:
                     es_activa = fila["cuenta_activa"].strip().lower() in ["true", "1", "si", "sí", "yes"]
