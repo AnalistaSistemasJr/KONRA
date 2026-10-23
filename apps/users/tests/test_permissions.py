@@ -29,8 +29,19 @@ class PermissionsTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_user_tipo_permisos(self):
-        value = self.user_w_perm.has_perm("movs.delete_registrarcargo")
-        self.assertEqual(value, False)
+        for grupo in Group.objects.all():
+            for permiso in grupo.permissions.all():
+                if grupo.name != "Soporte":
+                    self.assertFalse(
+                        permiso.codename.startswith(("delete_", "change_")),
+                        f"El rol '{grupo.name}' tiene el permiso '{permiso.codename}' que pertenece a {permiso.content_type}"
+                    )
+                else:
+                    self.assertFalse(
+                        permiso.codename.startswith(("delete_")),
+                        f"El rol '{grupo.name}' tiene el permiso '{permiso.codename}' que pertenece a '{permiso.content_type}'"
+                    )
+
 
     @patch.dict(
         "apps.users.management.commands.setup_roles.ROLES",
