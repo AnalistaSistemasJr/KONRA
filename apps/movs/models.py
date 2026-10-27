@@ -3,12 +3,13 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from apps.catalogos.models import Estacion, Cuenta
+from apps.movs.inmutable import InmutableModel
 
 class Tipo_movimiento(models.TextChoices):
     ENTRADA = "E", "Entrada"
     SALIDA = "S", "Salida"
     
-class Registro_Movimientos(models.Model):   
+class Registro_Movimientos(InmutableModel):   
     fecha_caja = models.DateField("Fecha de caja")
     estacion = models.ForeignKey(Estacion, on_delete=models.PROTECT, related_name="movimientos")
     cuenta = models.ForeignKey(Cuenta, on_delete=models.PROTECT, related_name="movimientos")
@@ -18,7 +19,7 @@ class Registro_Movimientos(models.Model):
     creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, editable=False, on_delete = models.PROTECT)
     creado_en = models.DateTimeField(auto_now_add=True, editable=False)
     
-    class Meta:
+    class Meta(InmutableModel.Meta):
         constraints = [
             models.CheckConstraint(
                 condition=(
