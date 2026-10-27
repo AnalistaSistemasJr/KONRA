@@ -8,6 +8,9 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.core.exceptions import PermissionDenied
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 from apps.catalogos.models import Estacion, Rubro, Cuenta
 from apps.movs.models import Registro_Movimientos, Tipo_movimiento
 
@@ -148,7 +151,7 @@ class ImutabilidadTest(TestCase):
             pk=movimiento.pk, fecha_caja=date.today(), estacion=self.estacion,
             cuenta=self.cuenta, tipo_movimiento=Tipo_movimiento.SALIDA,
             monto=Decimal("-1000.00"), descripcion="Intento de sobrescribir",
-            creado_por=self.usuario,
+            creado_por=self.usuario, creado_en=timezone.now(),
         )
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
