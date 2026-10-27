@@ -16,7 +16,7 @@ class PermissionsTest(TestCase):
         cls.user_w_perm = get_user_model().objects.create_user(
                     username = "user2_perm", password = "cftyuijhy65r"
                 )
-        cls.user_w_perm.groups.add(Group.objects.get(name="Auditor"))
+        cls.user_w_perm.groups.add(Group.objects.get(name="Capturista"))
         
     def test_user_sin_grupo_restriccion(self):
         self.client.force_login(self.user_wo_perm)
