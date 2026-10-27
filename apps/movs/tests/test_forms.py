@@ -20,12 +20,12 @@ class RegistrarFormTest(TestCase):
             username = "user2_con_grupo",
             password = "cftyujnbvfe4567"
         )
-        cls.usuario_con_grupo.groups.add(Group.objects.get(name = "Visualizador"))
+        cls.usuario_con_grupo.groups.add(Group.objects.get(name = "Auditor"))
         cls.usuario_con_permisos = get_user_model().objects.create_user(
             username = "user3_con_permisos",
             password = "dr78ijr45tf"
         )
-        cls.usuario_con_permisos.groups.add(Group.objects.get(name = "Auditor"))
+        cls.usuario_con_permisos.groups.add(Group.objects.get(name = "Capturista"))
 
         cls.estacion = Estacion.objects.create(
             numero_estacion=1,

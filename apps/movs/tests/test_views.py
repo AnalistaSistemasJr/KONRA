@@ -18,7 +18,7 @@ class UserTestAuth(TestCase):
             username="user1prueba",
             password="345678uhbgt5"
         )
-        cls.usuario.groups.add(Group.objects.get(name="Auditor"))
+        cls.usuario.groups.add(Group.objects.get(name="Capturista"))
         cls.usuario_inactivo = get_user_model().objects.create_user(
              username="user2prueba",
              password="vgy8uhgfr567",
@@ -83,7 +83,7 @@ class RegistroMovimientosViewTest(TestCase):
             username = "user_permisos",
             password = "cr567jbvt3"
         )
-        cls.usuario_permisos.groups.add(Group.objects.get(name = "Auditor"))
+        cls.usuario_permisos.groups.add(Group.objects.get(name = "Capturista"))
 
         cls.estacion = Estacion.objects.create(
             numero_estacion = 1,

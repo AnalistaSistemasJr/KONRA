@@ -21,7 +21,7 @@ class ModeloRegistroTest(TestCase):
             username="user1", 
             password = "prueba-123-xyz"
             )
-        cls.usuario.groups.add(Group.objects.get(name="Auditor"))
+        cls.usuario.groups.add(Group.objects.get(name="Capturista"))
 
         cls.estacion = Estacion.objects.create(
             numero_estacion=1,
