@@ -8,8 +8,6 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.core.exceptions import PermissionDenied
-from django.db import connection
-from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from apps.catalogos.models import Estacion, Rubro, Cuenta
 from apps.movs.models import Registro_Movimientos, Tipo_movimiento
@@ -197,3 +195,32 @@ class ImutabilidadTest(TestCase):
             )
         movimiento.refresh_from_db()
         self.assertEqual(movimiento.monto, monto_original)
+
+    def test_bulk_create_normal_crea_e_ignore_conflicts_no_modifica(self):
+        original = Registro_Movimientos.objects.create(
+            fecha_caja=date.today(), estacion=self.estacion, cuenta=self.cuenta,
+            tipo_movimiento=Tipo_movimiento.SALIDA, monto=Decimal("-5633.70"),
+            descripcion="Original", creado_por=self.usuario,
+        )
+        monto_original = original.monto
+        antes = Registro_Movimientos.objects.count()
+
+        nuevo = Registro_Movimientos(
+            fecha_caja=date.today(), estacion=self.estacion, cuenta=self.cuenta,
+            tipo_movimiento=Tipo_movimiento.ENTRADA, monto=Decimal("10.00"),
+            descripcion="Nuevo", creado_por=self.usuario,
+        )
+        Registro_Movimientos.objects.bulk_create([nuevo])
+        self.assertEqual(Registro_Movimientos.objects.count(), antes + 1)
+
+        duplicado = Registro_Movimientos(
+            pk=original.pk, fecha_caja=date.today(), estacion=self.estacion,
+            cuenta=self.cuenta, tipo_movimiento=Tipo_movimiento.SALIDA,
+            monto=Decimal("-1.00"), descripcion="Ignorado", creado_por=self.usuario,
+        )
+        Registro_Movimientos.objects.bulk_create([duplicado], ignore_conflicts=True)
+
+        original.refresh_from_db()
+        self.assertEqual(original.monto, monto_original)
+        self.assertEqual(original.descripcion, "Original")
+        self.assertEqual(Registro_Movimientos.objects.count(), antes + 1)
