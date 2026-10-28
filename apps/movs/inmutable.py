@@ -5,13 +5,18 @@ from django.db import models
 class InmutableQuerySet(models.QuerySet):
 
     def bulk_create(self, objs, batch_size=None, ignore_conflicts=False,
-                update_conflicts=False, **kwargs):
+                    update_conflicts=False, update_fields=None, unique_fields=None):
         if update_conflicts:
             raise PermissionDenied("Los registros no se pueden modificar.")
         return super().bulk_create(
-            objs, batch_size=batch_size, ignore_conflicts=ignore_conflicts, **kwargs
+            objs,
+            batch_size=batch_size,
+            ignore_conflicts=ignore_conflicts,
+            update_conflicts=update_conflicts,
+            update_fields=update_fields,
+            unique_fields=unique_fields,
         )
-    
+        
     def update(self, **kwargs):
         raise PermissionDenied("Los registros no se pueden modificar.")
 
@@ -33,3 +38,6 @@ class InmutableModel(models.Model):
 
     def delete(self, *args, **kwargs):
         raise PermissionDenied("Los registros no se pueden borrar.")
+
+
+    
