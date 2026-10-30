@@ -41,3 +41,25 @@ class Registro_Movimientos(InmutableModel):
                 name = "tipo_movimiento_valido"
             )
         ]
+
+
+class SaldoInicial(InmutableModel):
+    monto = models.DecimalField(max_digits=14, decimal_places=2)
+    fecha_referencia = models.DateField()
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    creado_en = models.DateField(auto_now_add=True, editable=False)
+    unico = models.BooleanField(default = True, editable = False, unique=True)
+
+    class Meta(InmutableModel.Meta):
+        constraints = [
+            models.CheckConstraint(
+                condition = (models.Q(monto__gte = 0)),
+                name = "saldo_inicial_mayor_igual_a_cero",
+                violation_error_message = "El saldo inicial debe de ser mayor o igual a cero"
+            ),
+            models.CheckConstraint(
+                condition = (models.Q(unico=True)),
+                name = "saldo_inicial_unico",
+                violation_error_message = "El saldo inicial deber de ser único"
+            )
+        ]
