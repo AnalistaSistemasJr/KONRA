@@ -236,6 +236,10 @@ class SaldoDeMovimientosTest(TestCase):
         with self.assertRaises(ValueError):
             totales_por("otro")
 
+    def test_totales_por_campo_valido_no_permitido(self):
+        with self.assertRaises(ValueError):
+            totales_por("monto")
+
     def test_saldo_de_caja_sin_saldo_inicial(self):
         with self.assertRaises(SaldoInicialNoConfigurado) as exc:
             saldo_de_caja()
