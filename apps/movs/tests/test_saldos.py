@@ -134,7 +134,7 @@ class SaldoDeMovimientosTest(TestCase):
                 estacion = self.estacion,
                 cuenta = self.cuenta,
                 tipo_movimiento = Tipo_movimiento.SALIDA,
-                monto=Decimal("50"),
+                monto=Decimal("50.00"),
                 descripcion="Prueba salida bulk create",
                 creado_por=self.usuario,                
             ))
@@ -149,7 +149,7 @@ class SaldoDeMovimientosTest(TestCase):
         with self.assertNumQueries(2):
             saldo_final = saldo_de_caja()
         
-        self.assertEqual(saldo_final, Decimal("2250"))
+        self.assertEqual(saldo_final, Decimal("2250.00"))
 
     def test_registro_y_filtado_de_datos_por_campo_estacion(self):
         # Registros estación 1 ------------------
