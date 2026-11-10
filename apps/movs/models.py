@@ -39,8 +39,12 @@ class Registro_Movimientos(InmutableModel):
                     tipo_movimiento__in = Tipo_movimiento.values
                 ),
                 name = "tipo_movimiento_valido"
-            )
+            ),
         ]
+
+        permissions = (
+            ("view_saldos", "Puede visualizar los saldos"),
+        )
 
 
 class SaldoInicial(InmutableModel):
@@ -63,3 +67,5 @@ class SaldoInicial(InmutableModel):
                 violation_error_message = "El saldo inicial deber de ser único"
             )
         ]
+
+        

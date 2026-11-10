@@ -7,8 +7,18 @@ from django.test import RequestFactory
 from io import StringIO
 
 ROLES_ESPERADOS = {
-    "Capturista": {"view_registro_movimientos", "add_registro_movimientos"},
-    "Auditor": {"view_registro_movimientos"},
+    "Capturista": {"view_registro_movimientos", "add_registro_movimientos", "view_saldos"},
+    "Auditor": {"view_registro_movimientos", "view_saldos"},
+    "Soporte": { 
+        "view_estacion",
+        "add_estacion",
+        "change_estacion",
+        "view_cuenta",
+        "add_cuenta",
+        "change_cuenta",
+        "view_rubro",
+        "add_rubro",
+        "change_rubro"}
 }
 
 class PermisosRegitroMovs(TestCase):

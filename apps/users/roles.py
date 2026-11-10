@@ -2,9 +2,11 @@ ROLES = {
     "Capturista": [
         "movs.add_registro_movimientos",
         "movs.view_registro_movimientos",
+        "movs.view_saldos",
     ],
     "Auditor": [
         "movs.view_registro_movimientos",
+        "movs.view_saldos",
     ],
     "Soporte":[
         "catalogos.view_estacion",
