@@ -1,6 +1,5 @@
-# ARCHIVO RECAPITULAR LAS REGLAS DE NEGOCIO APLICADAS
+# ARCHIVO RECAPITULACIÓN REGLAS DE NEGOCIO APLICADAS
 
-Escribir sobre:
 
 ## BASE DE DATOS
 Se elige realizar el desarrollo en postgresql debido a las ventajas que este tiene sobre sqlite. El manejo de decimales, ASCII y seguridad.
@@ -13,22 +12,47 @@ Salida:
 
 postgresql
 
+## SALDO INCIAL
+Este saldo inicial tendrá que ser ejecutado por el comando 
+```ps
+python manage.py config_si monto --fecha --usuario --aplicar --confirmar-monto
+```
+**A CONSIDERAR:**
+- Si no se usa `--aplicar`, NO se escribe nada, solo se ejecutan pruebas de validación.
+- Una vez aplicado, es innamovible, es decir, ya no se pueden realizar cambios.
+- El saldo incial no tiene límite, incluso puede ser cero; sin embargo, es obligatorio que esté configurado, de lo contrario, lanzará error en el guardado de los movimientos.
+
+Ejemplo de ejecución:
+```ps
+python manage.py config_si 100.00 --fecha=2026-10-10 --usuario=user --aplicar --confirmar-monto=100.00
+```
+
 ## CÁLCULO REGLA SALDO FINAL
 El saldo final de cada cuenta, es cálculado de la siguiente manera
-> Saldo Final = Saldo anterior + Entrada - Salida
+> Saldo Final = Saldo anterior + Entrada - Salida</br>
 <strong>NOTA:</strong> Siempre se sigue esta regla sin importar el signo del monto ingresado.
 
+Todo cálculo de saldo pasa por `apps/movs/saldos.py`, es decir, ningún cálculo se ejecuta desde una vista o reporte.
 
 ## MONTOS
 ### Condiciones de escritura
 1. Decimales permitidos: 2
-2. Dígitos permitidos: 12
+2. Dígitos permitidos: 12 
 
 ### Límites de monto
 El monto a ingresar en cada movimiento, hasta la fecha (Octubre 2026), está limitado a las siguientes condiciones:
 1. Tiene que ser diferente de cero, se permiten montos negativos
 2. El valor absoluto del monto tiene que ser menor o igual que 1,000,000.00
 
+## REGISTRO DE MOVIMIENTOS
+En la base de datos, se guardarán 2 fechas al ingresar cada uno de los movimientos; sin embargo, solo una es ingresada por el usuario, la otra es creada automáticamente:
+
+- **Fecha de caja:** Es la fecha en la que movimiento afectará a los saldos.
+- **Fecha de referencia:** Es la fecha creada por el sistema, esta servirá para identificar el tiempo en que se están registrando los movimientos cada uno de los capturistas, de esta manera, ayudará a clasificar si los movimientos se registran en tiempo y forma.
+
+## CONSULTA DE DATOS
+El filtrado de información puede realizarse a través de los campos `estacion` y `cuenta`, admitiendo filtros de fecha (fecha de caja) para la extracción de la información.
+Cualquier otro campo arrojará error.
 
 ### RUBROS
 ### Modelo de datos
@@ -76,3 +100,5 @@ El número de cuenta se almacena como texto y no como entero, ya que representa 
 | I5 | quitar `delete()` del queryset | `test_permiso_denegado_delete_all_movs` |
 | I6 | quitar la guarda de `update_conflicts` | `test_bulk_create_upsert_no_sobrescribe` |
 | I7 | `bulk_create` devuelve `[]` | `test_bulk_create_normal_crea_e_ignore_conflicts_no_modifica` |
+
+
