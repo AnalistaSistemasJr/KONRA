@@ -99,8 +99,8 @@ Es obligatorio que los archivos CSV cuenten con la siguiente estructura, de lo c
 - "especificacion" puede ir en blanco.
 
 | numero_cuenta | nombre_cuenta | tipo_cuenta |  rubro  | especificacion | cuenta_activa |
-|---------------|---------------|-------------|---------|---------------|---------------|
-00-00-00-00-00 |  cuenta num 1 |   Activos    | rubro_1 |  cuenta de act  |      true     |
+|---------------|---------------|-------------|---------|----------------|---------------|
+|00-00-00-00-00 |  cuenta num 1 |   Activos   | rubro_1 |  cuenta de act |      true     |
 
 
 ### **6. Ejecución de pruebas**

@@ -100,5 +100,3 @@ El número de cuenta se almacena como texto y no como entero, ya que representa 
 | I5 | quitar `delete()` del queryset | `test_permiso_denegado_delete_all_movs` |
 | I6 | quitar la guarda de `update_conflicts` | `test_bulk_create_upsert_no_sobrescribe` |
 | I7 | `bulk_create` devuelve `[]` | `test_bulk_create_normal_crea_e_ignore_conflicts_no_modifica` |
-
-
