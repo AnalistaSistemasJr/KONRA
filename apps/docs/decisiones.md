@@ -34,6 +34,9 @@ El saldo final de cada cuenta, es cálculado de la siguiente manera
 
 Todo cálculo de saldo pasa por `apps/movs/saldos.py`, es decir, ningún cálculo se ejecuta desde una vista o reporte.
 
+**PERMISOS SALDO** Todos los roles que tienen permiso de capturar o visualizar la información de los movimientos, pueden ver el saldo restante tras cada movimiento, el saldo mostrado es el global, es decir, se ve el saldo afectado por cada registro que fue capturado.
+Si después de requiere una fragmentación, será una nueva decisión.
+
 ## MONTOS
 ### Condiciones de escritura
 1. Decimales permitidos: 2
