@@ -1,14 +1,15 @@
 from django.test import TestCase
 from apps.movs.models import Registro_Movimientos
 from django.core.management import call_command, CommandError
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.contrib import admin
 from django.test import RequestFactory
 from io import StringIO
 
 ROLES_ESPERADOS = {
-    "Capturista": {"view_registro_movimientos", "add_registro_movimientos", "view_saldos"},
-    "Auditor": {"view_registro_movimientos", "view_saldos"},
+    "Capturista": {"view_registro_movimientos", "add_registro_movimientos", "ver_saldos"},
+    "Auditor": {"view_registro_movimientos", "ver_saldos"},
     "Soporte": { 
         "view_estacion",
         "add_estacion",
@@ -60,3 +61,18 @@ class PermisosRegitroMovs(TestCase):
 
     def test_movimientos_no_estan_en_el_admin(self):
         self.assertNotIn(Registro_Movimientos, admin.site._registry)
+
+
+class PermisosSaldos(TestCase):
+    def test_permisos_saldos(self):
+       permisos_saldos = Permission.objects.filter(
+           content_type__app_label = "movs", 
+           codename = "ver_saldos")
+
+       total_perm = permisos_saldos.count()
+       self.assertEqual(total_perm, 1)
+
+       self.assertEqual(
+           permisos_saldos.get().content_type,
+           ContentType.objects.get_for_model(Registro_Movimientos)
+       )
