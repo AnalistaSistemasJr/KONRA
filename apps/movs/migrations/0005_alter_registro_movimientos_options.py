@@ -12,6 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='registro_movimientos',
-            options={'permissions': (('view_saldos', 'Puede visualizar los saldos'),)},
+            options={'permissions': (('ver_saldos', 'Puede visualizar los saldos'),)},
         ),
     ]

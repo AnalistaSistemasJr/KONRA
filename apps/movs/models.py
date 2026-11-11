@@ -43,7 +43,7 @@ class Registro_Movimientos(InmutableModel):
         ]
 
         permissions = (
-            ("view_saldos", "Puede visualizar los saldos"),
+            ("ver_saldos", "Puede visualizar los saldos"),
         )
 
 
@@ -67,5 +67,3 @@ class SaldoInicial(InmutableModel):
                 violation_error_message = "El saldo inicial deber de ser único"
             )
         ]
-
-        
