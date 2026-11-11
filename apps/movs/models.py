@@ -47,6 +47,7 @@ class Registro_Movimientos(InmutableModel):
         )
 
 
+
 class SaldoInicial(InmutableModel):
     monto = models.DecimalField(max_digits=14, decimal_places=2)
     fecha_referencia = models.DateField()
