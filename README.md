@@ -112,7 +112,7 @@ python manage.py test
 coverage run --source=apps manage.py test
 coverage report -m
 ```
-**Criterio:** 100% de covertura
+**Criterio:** 100% de cobertura
 
 ## ESTRUCTURA PRINCIPAL DEL PROYECTO
 
