@@ -134,3 +134,8 @@ LOGIN_REDIRECT_URL = "movs:registro"
 LOGOUT_REDIRECT_URL = "users:login"
 
 AUTH_USER_MODEL = "users.user"
+
+# login (session inactivity time)
+SESSION_COOKIE_AGE = 1800
+
+SESSION_SAVE_EVERY_REQUEST = True

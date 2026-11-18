@@ -1,9 +1,15 @@
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required, permission_required
+from django.views.decorators.cache import never_cache
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from apps.movs.forms import RegistrarForm
 from apps.movs.models import Registro_Movimientos
+from django.views.generic import TemplateView
+from apps.movs.saldos import saldo_de_caja, SaldoInicialNoConfigurado
 
+
+@never_cache
 @login_required
 @permission_required('movs.add_registro_movimientos', raise_exception=True)
 def registrar_movimiento(request):
@@ -19,6 +25,7 @@ def registrar_movimiento(request):
     context = {'form':form}
     return render(request, "movs/registro.html", context)
 
+@never_cache
 @login_required
 @permission_required('movs.view_registro_movimientos', raise_exception=True)
 def consulta_movimientos(request):

@@ -13,7 +13,7 @@
         <button type="submit">Nuevo movimiento</button>
     </form>
     <br>
-    <form action="{% url 'users:login' %}" method="post">
+    <form action="{% url 'users:logout' %}" method="post">
         {% csrf_token %}
         <button type="submit">Cerrar sesión</button>
     </form>
