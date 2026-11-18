@@ -86,6 +86,7 @@ class TipoCuenta(models.TextChoices):
     INGRESOS = "Ingresos", "Ingresos"
     GASTOS   = "Gastos", "Gastos"
     COSTOS   = "Costos", "Costos"
+    INTERNO  = "Interno", "Interno"
     DEFAULT  = "No_definido", "No_definido"
 
 class Cuenta(models.Model):
