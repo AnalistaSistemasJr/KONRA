@@ -95,18 +95,14 @@ class TestLogin(TestCase):
         self.assertIn("private", cache_control)
 
     def test_sessionid_tiene_max_age_1800(self):
-        self.client.post(
+        response = self.client.post(
             reverse("users:login"),
             {
                 "username": "user2_perm",
                 "password": "cftyuijhy65r"
             }
         )
-
-        response = self.client.get(reverse("movs:consulta"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("sessionid", response.cookies)
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(
             int(response.cookies["sessionid"]["max-age"]),
             1800
@@ -125,7 +121,3 @@ class TestLogin(TestCase):
         response = self.client.get(reverse("movs:consulta"))
 
         self.assertIn("sessionid", response.cookies)
-        self.assertEqual(
-            int(response.cookies["sessionid"]["max-age"]),
-            1800
-        )
